@@ -8,16 +8,16 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "thirdparty/stb_image_write.h"
 
-const int PixelsPerDegree = 2;
-const int MinLatitude = -90;
-const int MaxLatitude = +90;
-const int MinLongitude = -180;
-const int MaxLongitude = +180;
-const int PixelsWide = (MaxLongitude - MinLongitude) * PixelsPerDegree;
-const int PixelsHigh = (MaxLatitude - MinLatitude) * PixelsPerDegree;
+const int pixelsPerDegree = 2;
+const int minLatitude = -90;
+const int maxLatitude = +90;
+const int minLongitude = -180;
+const int maxLongitude = +180;
+const int width = (maxLongitude - minLongitude) * pixelsPerDegree;
+const int height = (maxLatitude - minLatitude) * pixelsPerDegree;
 const double AU_IN_M = 149597871000.0;
 
-void render(uint32_t *image, unsigned width, unsigned height, astro_time_t base_time);
+void render(uint32_t *image, astro_time_t base_time);
 
 int main(int argc, const char **argv) {
     const char *outFileName;
@@ -35,24 +35,24 @@ int main(int argc, const char **argv) {
     }
 
     // Create a world map image in memory for the given time.
-    uint32_t *image = calloc(PixelsWide * PixelsHigh, 4);
-    render(image, PixelsWide, PixelsHigh, time);
+    uint32_t *image = calloc(width * height, 4);
+    render(image, time);
 
-    return !stbi_write_png(outFileName, PixelsWide, PixelsHigh, 4, (uint8_t *) image, PixelsWide * 4);
+    return !stbi_write_png(outFileName, width, height, 4, image, width * 4);
 }
 
-void render(uint32_t *image, unsigned width, unsigned height, astro_time_t base_time) {
+void render(uint32_t *image, astro_time_t base_time) {
     #pragma omp parallel for
-    for (unsigned i = 0; i < PixelsWide; ++i) {
-        for (unsigned j = 0; j < PixelsHigh; ++j) {
-            double longitude = (i / (double)PixelsPerDegree) + MinLongitude;
+    for (unsigned i = 0; i < width; ++i) {
+        for (unsigned j = 0; j < height; ++j) {
+            double longitude = (i / (double)pixelsPerDegree) + minLongitude;
             astro_observer_t observer = {
-                .height = 0.0,
-                .latitude = ((PixelsHigh - (j + 1)) / (double)PixelsPerDegree) + MinLatitude,
+                .height = .0,
+                .latitude = ((height - (j + 1)) / (double)pixelsPerDegree) + minLatitude,
                 .longitude = longitude,
             };
 
-            astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360.0);
+            astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360);
             astro_search_result_t sunset  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_SET, time, 1);
             astro_search_result_t moonset = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_SET, time, 1);
             if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) continue;
@@ -81,7 +81,7 @@ void render(uint32_t *image, unsigned width, unsigned height, astro_time_t base_
 
             // https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L54-L62
             double HP = lunar_parallax / cos(moon_alt * DEG2RAD);
-            double SD = 0.27245 * HP * (180.0 * 60 / M_PI); // semi-diameter of the Moon
+            double SD = .27245 * HP * (180.0 * 60 / M_PI); // semi-diameter of the Moon
             double SD_topo = SD * (1 + (sin(moon_alt * DEG2RAD) * sin(HP)));
 
             // https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
@@ -89,20 +89,20 @@ void render(uint32_t *image, unsigned width, unsigned height, astro_time_t base_
             double DAZ = sun_az - moon_az;
             // double ARCL = acos(cos(ARCV * DEG2RAD) * cos(DAZ * DEG2RAD)) * RAD2DEG;
             double W_topo = SD_topo * (1 - (cos(ARCV * DEG2RAD) * cos(DAZ * DEG2RAD)));
-            double q = (ARCV - (11.8371 - 6.3226*W_topo + 0.7319*pow(W_topo, 2) - 0.1018*pow(W_topo, 3))) / 10;
+            double q = (ARCV - (11.8371 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3))) / 10;
 
             unsigned char q_code = 'F';
-            if (q > +0.216) q_code = 'A'; // Crescent easily visible
-            else if (+0.216 >= q && q > -0.014) q_code = 'B'; // Crescent visible under perfect conditions
-            else if (-0.014 >= q && q > -0.160) q_code = 'C'; // May need optical aid to find crescent
-            else if (-0.160 >= q && q > -0.232) q_code = 'D'; // Will need optical aid to find crescent
-            else if (-0.232 >= q && q > -0.293) q_code = 'E'; // Crescent not visible with telescope
-            else if (-0.293 >= q) q_code = 'F';
+            if (q > +.216) q_code = 'A'; // Crescent easily visible
+            else if (+.216 >= q && q > -.014) q_code = 'B'; // Crescent visible under perfect conditions
+            else if (-.014 >= q && q > -.160) q_code = 'C'; // May need optical aid to find crescent
+            else if (-.160 >= q && q > -.232) q_code = 'D'; // Will need optical aid to find crescent
+            else if (-.232 >= q && q > -.293) q_code = 'E'; // Crescent not visible with telescope
+            else if (-.293 >= q) q_code = 'F';
 
             uint8_t value = ('F' - q_code) * 255 / 5;
-            uint32_t *pixel = &image[i + j*width];
-            assert(i >= 0 || i < width);
-            assert(i >= 0 || i < height);
+            uint32_t *pixel = &image[i + j * width];
+            // assert(i >= 0 || i < width);
+            // assert(i >= 0 || i < height);
             *pixel = value + (value << 8) + (value << 16) + 0xFF000000;
         }
     }
