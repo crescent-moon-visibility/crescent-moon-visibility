@@ -42,7 +42,9 @@ int main(int argc, const char **argv) {
 }
 
 void render(uint32_t *image, astro_time_t base_time) {
+#if defined(_OPENMP)
     #pragma omp parallel for
+#endif
     for (unsigned i = 0; i < width; ++i) {
         for (unsigned j = 0; j < height; ++j) {
             double longitude = (i / (double)pixelsPerDegree) + minLongitude;
