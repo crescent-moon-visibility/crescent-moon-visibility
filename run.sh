@@ -1,7 +1,12 @@
 #!/bin/bash
 
+CC=gcc
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    CC="/usr/local/opt/llvm/bin/clang -L/usr/local/opt/llvm/lib"
+fi
+
 rm -f visibility.out
-gcc -Wall -Werror -o visibility.out -Ofast \
+$CC -fopenmp -Wall -Werror -o visibility.out -Ofast \
     visibility.c thirdparty/astro_demo_common.c thirdparty/astronomy.c \
     || exit $?
 

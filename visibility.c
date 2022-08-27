@@ -15,6 +15,7 @@ const int MinLongitude = -180;
 const int MaxLongitude = +180;
 const int PixelsWide = (MaxLongitude - MinLongitude) * PixelsPerDegree;
 const int PixelsHigh = (MaxLatitude - MinLatitude) * PixelsPerDegree;
+const double AU_IN_M = 149597871000.0;
 
 void render(uint32_t *image, unsigned width, unsigned height, astro_time_t base_time);
 
@@ -34,23 +35,24 @@ int main(int argc, const char **argv) {
     }
 
     // Create a world map image in memory for the given time.
-    uint32_t image[PixelsWide * PixelsHigh] = {0};
+    uint32_t *image = calloc(PixelsWide * PixelsHigh, 4);
     render(image, PixelsWide, PixelsHigh, time);
 
     return !stbi_write_png(outFileName, PixelsWide, PixelsHigh, 4, (uint8_t *) image, PixelsWide * 4);
 }
 
 void render(uint32_t *image, unsigned width, unsigned height, astro_time_t base_time) {
-    astro_observer_t observer;
-    observer.height = 0.0;
-    const double AU_IN_M = 149597871000.0;
-
+    #pragma omp parallel for
     for (unsigned i = 0; i < PixelsWide; ++i) {
-        observer.longitude = (i / (double)PixelsPerDegree) + MinLongitude;
         for (unsigned j = 0; j < PixelsHigh; ++j) {
-            observer.latitude = ((PixelsHigh - (j + 1)) / (double)PixelsPerDegree) + MinLatitude;
+            double longitude = (i / (double)PixelsPerDegree) + MinLongitude;
+            astro_observer_t observer = {
+                .height = 0.0,
+                .latitude = ((PixelsHigh - (j + 1)) / (double)PixelsPerDegree) + MinLatitude,
+                .longitude = longitude,
+            };
 
-            astro_time_t time = Astronomy_AddDays(base_time, -observer.longitude / 360.0);
+            astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360.0);
             astro_search_result_t sunset  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_SET, time, 1);
             astro_search_result_t moonset = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_SET, time, 1);
             if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) continue;
