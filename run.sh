@@ -7,7 +7,7 @@ fi
 
 rm -f visibility.out
 $CC -fopenmp -Wall -Werror -o visibility.out -Ofast \
-    visibility.c thirdparty/astro_demo_common.c thirdparty/astronomy.c \
+    visibility.c thirdparty/astro_demo_common.c thirdparty/astronomy.c -lm \
     || exit $?
 
 rm -f *.png
