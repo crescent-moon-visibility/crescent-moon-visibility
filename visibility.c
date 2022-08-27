@@ -91,7 +91,7 @@ void render(uint32_t *image, astro_time_t base_time) {
             double W_topo = SD_topo * (1 - (cos(ARCV * DEG2RAD) * cos(DAZ * DEG2RAD)));
             double q = (ARCV - (11.8371 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3))) / 10;
 
-            unsigned char q_code = 'F';
+            unsigned char q_code = 'G';
             if (q > +.216) q_code = 'A'; // Crescent easily visible
             else if (+.216 >= q && q > -.014) q_code = 'B'; // Crescent visible under perfect conditions
             else if (-.014 >= q && q > -.160) q_code = 'C'; // May need optical aid to find crescent
@@ -99,11 +99,16 @@ void render(uint32_t *image, astro_time_t base_time) {
             else if (-.232 >= q && q > -.293) q_code = 'E'; // Crescent not visible with telescope
             else if (-.293 >= q) q_code = 'F';
 
-            uint8_t value = ('F' - q_code) * 255 / 5;
-            uint32_t *pixel = &image[i + j * width];
+            uint32_t color = 0x00000000;
+            if (q_code == 'A') color = 0xFF00FF00;
+            else if (q_code == 'B') color = 0xFF3EFF00;
+            else if (q_code == 'C') color = 0xFF3EFF6D;
+            else if (q_code == 'D') color = 0xFF00FFFA;
+            else if (q_code == 'E') color = 0xFF4175FF;
+            else if (q_code == 'F') color = 0x00000000;
             // assert(i >= 0 || i < width);
             // assert(i >= 0 || i < height);
-            *pixel = value + (value << 8) + (value << 16) + 0xFF000000;
+            image[i + j * width] = color;
         }
     }
 }
