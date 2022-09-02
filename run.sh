@@ -2,12 +2,12 @@
 
 CC=gcc
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    CC="/usr/local/opt/llvm/bin/clang -L/usr/local/opt/llvm/lib"
+    CC="/usr/local/opt/llvm/bin/clang -L/usr/local/opt/llvm/lib" # -mllvm -polly
 fi
 
 rm -f visibility.out
-$CC -fopenmp -Wall -Werror -o visibility.out -Ofast \
-    visibility.c thirdparty/astro_demo_common.c thirdparty/astronomy.c -lm \
+$CC -fopenmp -Wall -Werror -o visibility.out -Ofastest -fno-exceptions -fno-rtti \
+    visibility.cc thirdparty/astro_demo_common.c thirdparty/astronomy.c -lm \
     || exit $?
 
 rm -f *.png

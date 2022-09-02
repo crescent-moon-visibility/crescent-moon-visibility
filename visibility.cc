@@ -1,9 +1,9 @@
 // NOTE: It is not yet accurate as we expect
 // MIT, @ebraminio and @hidp123
 
-#include <stdio.h>
-#include <math.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cmath>
+#include <cstdint>
 #include "thirdparty/astro_demo_common.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "thirdparty/stb_image_write.h"
@@ -35,7 +35,7 @@ int main(int argc, const char **argv) {
     }
 
     // Create a world map image in memory for the given time.
-    uint32_t *image = calloc(width * height, 4);
+    uint32_t *image = (uint32_t *) calloc(width * height, 4);
     render(image, time);
 
     return !stbi_write_png(outFileName, width, height, 4, image, width * 4);
@@ -49,9 +49,9 @@ void render(uint32_t *image, astro_time_t base_time) {
         for (unsigned j = 0; j < height; ++j) {
             double longitude = (i / (double)pixelsPerDegree) + minLongitude;
             astro_observer_t observer = {
-                .height = .0,
                 .latitude = ((height - (j + 1)) / (double)pixelsPerDegree) + minLatitude,
                 .longitude = longitude,
+                .height = .0,
             };
 
             astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360);
