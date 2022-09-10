@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# NOTE: It is not yet accurate as we expect
 # MIT, @ebraminio and @hidp123
 
 import matplotlib.pyplot as plt
@@ -25,33 +24,37 @@ def calculate(base_time, latitude, longitude):
 
     # best time: an empirical prediction of the time which gives the observer the best opportunity
     # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
-    best_time = astronomy.Time(sunset.ut + lag_time * 5/9)
+    best_time = astronomy.Time(sunset.ut + lag_time * 4/9)
 
-    sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, False, False)
+    sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, 1, None)
     sun_distance = AU_IN_M * sun_equator.vec.Length()
-    sun_horizon = astronomy.Horizon(best_time, observer, sun_equator.ra, sun_equator.dec, astronomy.Refraction.Normal)
+    sun_horizon = astronomy.Horizon(best_time, observer, sun_equator.ra, sun_equator.dec, astronomy.Refraction.JplHorizons)
     sun_alt = sun_horizon.altitude
     sun_az = sun_horizon.azimuth
 
-    moon_equator = astronomy.Equator(astronomy.Body.Moon, best_time, observer, False, False)
-    moon_distance = AU_IN_M * moon_equator.vec.Length()
-    moon_horizon = astronomy.Horizon(best_time, observer, moon_equator.ra, moon_equator.dec, astronomy.Refraction.Normal)
+    moon_elongation = astronomy.Elongation(astronomy.Body.Moon, best_time) #geocentric elongation
+    moon_equator = astronomy.Equator(astronomy.Body.Moon, best_time, observer, 1, None) #RA is in h.dd (hours.degrees)
+    moon_distance = astronomy.Libration(best_time).dist_km #AU_IN_M * moon_equator.vec.Length()
+    moon_horizon = astronomy.Horizon(best_time, observer, moon_equator.ra, moon_equator.dec, astronomy.Refraction.JplHorizons)
     moon_alt = moon_horizon.altitude
     moon_az = moon_horizon.azimuth
 
     # https://github.com/rob-blackbourn/PyFinance/blob/2bbad39b/py_calendrical/location.py#L217
-    lunar_parallax = 6378140 / moon_distance * math.cos(math.radians(moon_alt))
+    lunar_parallax = 6378140 / moon_distance * math.cos(math.radians(moon_alt)) #lunar_parallax in radians.
+    #lunar_parallax = math.degrees(lunar_parallax_RAD)
 
     # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L54-L62
-    HP = lunar_parallax / math.cos(math.radians(moon_alt))
-    SD = 0.27245 * HP * (180 * 60 / math.pi)        # semi-diameter of the Moon
-    SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(HP)))
+    #HP = lunar_parallax / math.cos(math.radians(moon_alt))
+    SD = astronomy.Libration(best_time).diam_deg * 60 / 2 #in arcminutes, geocentric
+    #SD = 0.27245 * HP * (180 * 60 / math.pi)        # semi-diameter of the Moon
+    SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(SD/60 * 27245)))) #in arcminutes
 
     # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
-    ARCV = moon_alt - sun_alt
+    ARCL = moon_elongation.elongation #in degrees
     DAZ = sun_az - moon_az
-    #ARCL = math.degrees(math.acos(math.cos(math.radians(ARCV)) * math.cos(math.radians(DAZ))))
-    W_topo = SD_topo * (1 - (math.cos(math.radians(ARCV)) * math.cos(math.radians(DAZ))))
+    ARCV = math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))))
+
+    W_topo = SD_topo * (1 - (math.cos(math.radians(ARCL)))) #in arcminutes
     q = (ARCV - (11.8371 - 6.3226*W_topo + 0.7319*W_topo**2 - 0.1018*W_topo**3)) / 10
 
     if q > +0.216: q_code = 'A' # Crescent easily visible
@@ -101,10 +104,13 @@ def run(base_time):
     #result.to_excel("output_" + str(base_time.Utc()) + ".xlsx")
 
     plt.imshow(H)
-    plt.savefig(str(base_time.Utc()) + '.png')
-    #plt.show() uncomment this when running inside Jupyter Notebook / Google Colab
+    #plt.savefig(str(base_time.Utc()) + '.png')
+    plt.show() # uncomment this when running inside Jupyter Notebook / Google Colab
 
 run(astronomy.Time.Make(2022, 8, 27, 0, 0, 0))
 run(astronomy.Time.Make(2022, 8, 28, 0, 0, 0))
 run(astronomy.Time.Make(2022, 8, 29, 0, 0, 0))
 
+run(astronomy.Time.Make(2022, 6, 29, 0, 0, 0))
+#run(astronomy.Time.Make(2022, 6, 30, 0, 0, 0))
+#run(astronomy.Time.Make(2022, 8, 29, 0, 0, 0))

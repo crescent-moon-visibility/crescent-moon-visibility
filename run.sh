@@ -11,6 +11,7 @@ $CC -fopenmp -Wall -Werror -o visibility.out -Ofastest -fno-exceptions -fno-rtti
     || exit $?
 
 rm -f *.png
-time ./visibility.out 2022-08-27.png 2022-08-27T00:00:00Z
-time ./visibility.out 2022-08-28.png 2022-08-28T00:00:00Z
-time ./visibility.out 2022-08-29.png 2022-08-29T00:00:00Z
+time ./visibility.out 2022-06-29.png 2022-06-29T00:00:00Z
+composite -blend 80 2022-06-29.png map.jpg 2022-06-29.png
+#time ./visibility.out 2022-08-28.png 2022-08-28T00:00:00Z
+#time ./visibility.out 2022-08-29.png 2022-08-29T00:00:00Z

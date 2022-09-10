@@ -1,4 +1,3 @@
-// NOTE: It is not yet accurate as we expect
 // MIT, @ebraminio and @hidp123
 
 #include <cstdio>
@@ -15,7 +14,6 @@ const int minLongitude = -180;
 const int maxLongitude = +180;
 const int width = (maxLongitude - minLongitude) * pixelsPerDegree;
 const int height = (maxLatitude - minLatitude) * pixelsPerDegree;
-const double AU_IN_M = 149597871000.0;
 
 void render(uint32_t *image, astro_time_t base_time);
 
@@ -66,31 +64,31 @@ void render(uint32_t *image, astro_time_t base_time) {
             // to see the new crescent Moon (Sunset time + (4/9)*Lag time).
             astro_time_t best_time = Astronomy_TimeFromDays(sunset.time.ut + lag_time * 4.0/9);
             //
-            astro_equatorial_t sun_equator = Astronomy_Equator(BODY_SUN, &best_time, observer, EQUATOR_J2000, ABERRATION);
+            astro_equatorial_t sun_equator = Astronomy_Equator(BODY_SUN, &best_time, observer, EQUATOR_OF_DATE, ABERRATION);
             // double sun_distance = AU_IN_M * Astronomy_VectorLength(sun_equator.vec);
-            astro_horizon_t sun_horizon = Astronomy_Horizon(&best_time, observer, sun_equator.ra, sun_equator.dec, REFRACTION_NORMAL);
-            double sun_alt = sun_horizon.altitude;
+            astro_horizon_t sun_horizon = Astronomy_Horizon(&best_time, observer, sun_equator.ra, sun_equator.dec, REFRACTION_JPLHOR);
+            // double sun_alt = sun_horizon.altitude;
             double sun_az = sun_horizon.azimuth;
             //
-            astro_equatorial_t moon_equator = Astronomy_Equator(BODY_MOON, &best_time, observer, EQUATOR_J2000, ABERRATION);
-            double moon_distance = AU_IN_M * Astronomy_VectorLength(moon_equator.vec);
-            astro_horizon_t moon_horizon = Astronomy_Horizon(&best_time, observer, moon_equator.ra, moon_equator.dec, REFRACTION_NORMAL);
+            astro_elongation_t moon_elongation = Astronomy_Elongation(BODY_MOON, best_time);
+            astro_equatorial_t moon_equator = Astronomy_Equator(BODY_MOON, &best_time, observer, EQUATOR_OF_DATE, ABERRATION);
+            astro_libration_t liberation = Astronomy_Libration(best_time);
+            // double moon_distance = liberation.dist_km;
+            astro_horizon_t moon_horizon = Astronomy_Horizon(&best_time, observer, moon_equator.ra, moon_equator.dec, REFRACTION_JPLHOR);
             double moon_alt = moon_horizon.altitude;
             double moon_az = moon_horizon.azimuth;
 
             // https://github.com/rob-blackbourn/PyFinance/blob/2bbad39b/py_calendrical/location.py#L217
-            double lunar_parallax = 6378140.0 / moon_distance * cos(moon_alt * DEG2RAD);
+            // double lunar_parallax = 6378140.0 / moon_distance * cos(moon_alt * DEG2RAD);
 
-            // https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L54-L62
-            double HP = lunar_parallax / cos(moon_alt * DEG2RAD);
-            double SD = .27245 * HP * (180.0 * 60 / M_PI); // semi-diameter of the Moon
-            double SD_topo = SD * (1 + (sin(moon_alt * DEG2RAD) * sin(HP)));
+            double SD = liberation.diam_deg * 60 / 2; // in arcminutes, geocentric
+            double SD_topo = SD * (1 + (sin(moon_alt * DEG2RAD) * sin(SD/60 * 27245 * DEG2RAD))); // in arcminutes
 
             // https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
-            double ARCV = moon_alt - sun_alt;
+            double ARCL = moon_elongation.elongation; // in degrees
             double DAZ = sun_az - moon_az;
-            // double ARCL = acos(cos(ARCV * DEG2RAD) * cos(DAZ * DEG2RAD)) * RAD2DEG;
-            double W_topo = SD_topo * (1 - (cos(ARCV * DEG2RAD) * cos(DAZ * DEG2RAD)));
+            double ARCV = acos(cos(ARCL * DEG2RAD) / cos(DAZ * DEG2RAD)) * RAD2DEG;
+            double W_topo = SD_topo * (1 - (cos(ARCL * DEG2RAD))); // in arcminutes
             double q = (ARCV - (11.8371 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3))) / 10;
 
             unsigned char q_code = 'G';
