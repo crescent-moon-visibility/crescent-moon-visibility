@@ -100,11 +100,11 @@ void render(uint32_t *image, astro_time_t base_time) {
             else if (-.293 >= q) q_code = 'F';
 
             uint32_t color = 0x00000000;
-            if (q_code == 'A') color = 0xFF00FF00;
-            else if (q_code == 'B') color = 0xFF3EFF00;
-            else if (q_code == 'C') color = 0xFF3EFF6D;
+            if (q_code == 'A') color = 0xFF3EFF00;
+            else if (q_code == 'B') color = 0xFF3EFF6D;
+            else if (q_code == 'C') color = 0xFF00FF9E;
             else if (q_code == 'D') color = 0xFF00FFFA;
-            else if (q_code == 'E') color = 0xFF4175FF;
+            else if (q_code == 'E') color = 0xFF3C78FF;
             else if (q_code == 'F') color = 0x00000000;
             // assert(i >= 0 || i < width);
             // assert(i >= 0 || i < height);
