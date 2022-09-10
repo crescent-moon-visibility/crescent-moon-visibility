@@ -89,15 +89,24 @@ void render(uint32_t *image, astro_time_t base_time) {
             double DAZ = sun_az - moon_az;
             double ARCV = acos(cos(ARCL * DEG2RAD) / cos(DAZ * DEG2RAD)) * RAD2DEG;
             double W_topo = SD_topo * (1 - (cos(ARCL * DEG2RAD))); // in arcminutes
+#if 1 // YALLOP
             double q = (ARCV - (11.8371 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3))) / 10;
 
-            unsigned char q_code = 'G';
+            unsigned char q_code;
             if (q > +.216) q_code = 'A'; // Crescent easily visible
-            else if (+.216 >= q && q > -.014) q_code = 'B'; // Crescent visible under perfect conditions
-            else if (-.014 >= q && q > -.160) q_code = 'C'; // May need optical aid to find crescent
-            else if (-.160 >= q && q > -.232) q_code = 'D'; // Will need optical aid to find crescent
-            else if (-.232 >= q && q > -.293) q_code = 'E'; // Crescent not visible with telescope
-            else if (-.293 >= q) q_code = 'F';
+            else if (q > -.014) q_code = 'B'; // Crescent visible under perfect conditions
+            else if (q > -.160) q_code = 'C'; // May need optical aid to find crescent
+            else if (q > -.232) q_code = 'D'; // Will need optical aid to find crescent
+            else if (q > -.293) q_code = 'E'; // Crescent not visible with telescope
+            else q_code = 'F';
+#else // Odeh, not working as expected yet
+            unsigned char q_code;
+            double V = ARCV - (7.1651 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3));
+            if (V >= 5.65) q_code = 'A'; // Crescent is visible by naked eye
+            else if (V >= 2) q_code = 'C'; // Crescent is visible by optical aid
+            else if (V >= -0.96) q_code = 'E'; // Crescent is visible only by optical aid
+            else q_code = 'F';
+#endif
 
             uint32_t color = 0x00000000;
             if (q_code == 'A') color = 0xFF3EFF00;
