@@ -7,7 +7,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "thirdparty/stb_image_write.h"
 
-const int pixelsPerDegree = 2;
+const int pixelsPerDegree = 4;
 const int minLatitude = -90;
 const int maxLatitude = +90;
 const int minLongitude = -180;
