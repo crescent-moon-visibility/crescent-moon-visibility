@@ -13,8 +13,8 @@ AU_IN_M = 149597871000
 def calculate(base_time, latitude, longitude):
     observer = astronomy.Observer(latitude, longitude)
     time = base_time.AddDays(-longitude / 360) # this corrects the base time based on timezone
-    sunset   = astronomy.SearchRiseSet(astronomy.Body.Sun,  observer, astronomy.Direction.Set, time, 1)
-    moonset  = astronomy.SearchRiseSet(astronomy.Body.Moon, observer, astronomy.Direction.Set, time, 1)
+    sunset   = astronomy.SearchRiseSet(astronomy.Body.Sun,  observer, astronomy.Direction.Set, time, True)
+    moonset  = astronomy.SearchRiseSet(astronomy.Body.Moon, observer, astronomy.Direction.Set, time, True)
     if sunset is None or moonset is None: return
 
     # https://astro.ukho.gov.uk/moonwatch/background.html
@@ -26,14 +26,14 @@ def calculate(base_time, latitude, longitude):
     # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
     best_time = astronomy.Time(sunset.ut + lag_time * 4/9)
 
-    sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, 1, None)
+    sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
     sun_distance = AU_IN_M * sun_equator.vec.Length()
     sun_horizon = astronomy.Horizon(best_time, observer, sun_equator.ra, sun_equator.dec, astronomy.Refraction.JplHorizons)
     sun_alt = sun_horizon.altitude
     sun_az = sun_horizon.azimuth
 
     moon_elongation = astronomy.Elongation(astronomy.Body.Moon, best_time) #geocentric elongation
-    moon_equator = astronomy.Equator(astronomy.Body.Moon, best_time, observer, 1, None) #RA is in h.dd (hours.degrees)
+    moon_equator = astronomy.Equator(astronomy.Body.Moon, best_time, observer, True, True) #RA is in h.dd (hours.degrees)
     moon_distance = astronomy.Libration(best_time).dist_km #AU_IN_M * moon_equator.vec.Length()
     moon_horizon = astronomy.Horizon(best_time, observer, moon_equator.ra, moon_equator.dec, astronomy.Refraction.JplHorizons)
     moon_alt = moon_horizon.altitude
