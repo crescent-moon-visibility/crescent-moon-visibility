@@ -27,27 +27,29 @@ def calculate(base_time, latitude, longitude):
     best_time = astronomy.Time(sunset.ut + lag_time * 4/9)
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
-    sun_distance = AU_IN_M * sun_equator.vec.Length()
+    #sun_distance = KM_PER_AU * sun_equator.dist #topocentric
     sun_horizon = astronomy.Horizon(best_time, observer, sun_equator.ra, sun_equator.dec, astronomy.Refraction.JplHorizons)
     sun_alt = sun_horizon.altitude
     sun_az = sun_horizon.azimuth
 
     moon_elongation = astronomy.Elongation(astronomy.Body.Moon, best_time) #geocentric elongation
     moon_equator = astronomy.Equator(astronomy.Body.Moon, best_time, observer, True, True) #RA is in h.dd (hours.degrees)
-    moon_distance = astronomy.Libration(best_time).dist_km #AU_IN_M * moon_equator.vec.Length()
+    #moon_distance = KM_PER_AU * moon_equator.dist #topocentric
+    #moon_distance2 = astronomy.Libration(best_time).dist_km #AU_IN_M * moon_equator.vec.Length()
     moon_horizon = astronomy.Horizon(best_time, observer, moon_equator.ra, moon_equator.dec, astronomy.Refraction.JplHorizons)
     moon_alt = moon_horizon.altitude
     moon_az = moon_horizon.azimuth
 
     # https://github.com/rob-blackbourn/PyFinance/blob/2bbad39b/py_calendrical/location.py#L217
-    lunar_parallax = 6378140 / moon_distance * math.cos(math.radians(moon_alt)) #lunar_parallax in radians.
+    #lunar_parallax = 6378140 / moon_distance * math.cos(math.radians(moon_alt)) #lunar_parallax in radians.
     #lunar_parallax = math.degrees(lunar_parallax_RAD)
 
     # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L54-L62
     #HP = lunar_parallax / math.cos(math.radians(moon_alt))
     SD = astronomy.Libration(best_time).diam_deg * 60 / 2 #in arcminutes, geocentric
+    lunar_parallax = (SD/60)/0.27245 #in degrees
     #SD = 0.27245 * HP * (180 * 60 / math.pi)        # semi-diameter of the Moon
-    SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(SD/60 * 27245)))) #in arcminutes
+    SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax)))) #in arcminutes
 
     # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
     ARCL = moon_elongation.elongation #in degrees
