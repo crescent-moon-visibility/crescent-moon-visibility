@@ -79,10 +79,10 @@ void render(uint32_t *image, astro_time_t base_time) {
             double moon_az = moon_horizon.azimuth;
 
             // https://github.com/rob-blackbourn/PyFinance/blob/2bbad39b/py_calendrical/location.py#L217
-            // double lunar_parallax = 6378140.0 / moon_distance * cos(moon_alt * DEG2RAD);
 
             double SD = liberation.diam_deg * 60 / 2; // in arcminutes, geocentric
-            double SD_topo = SD * (1 + (sin(moon_alt * DEG2RAD) * sin(SD/60 * 27245 * DEG2RAD))); // in arcminutes
+            double lunar_parallax = SD/0.27245; // in arcminutes
+            double SD_topo = SD * (1 + (sin(moon_alt * DEG2RAD) * sin(lunar_parallax/60 * DEG2RAD))); // in arcminutes
 
             // https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
             double ARCL = moon_elongation.elongation; // in degrees
