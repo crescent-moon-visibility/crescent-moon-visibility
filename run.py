@@ -8,7 +8,7 @@ import astronomy # pip install astronomy-engine
 import pandas
 from tqdm import tqdm
 
-#AU_IN_M = 149597871000 #this needs confirming, whether the output is in metres or km.
+#KM_PER_AU = 1.4959787069098932e+8   #<const> The number of kilometers per astronomical unit.
 
 def calculate(base_time, latitude, longitude):
     observer = astronomy.Observer(latitude, longitude)
@@ -32,7 +32,7 @@ def calculate(base_time, latitude, longitude):
     sun_alt = sun_horizon.altitude
     sun_az = sun_horizon.azimuth
 
-    moon_elongation = astronomy.Elongation(astronomy.Body.Moon, best_time) #geocentric elongation
+    moon_elongation_event = astronomy.Elongation(astronomy.Body.Moon, best_time) #geocentric elongation event. Gives three outputs.
     moon_equator = astronomy.Equator(astronomy.Body.Moon, best_time, observer, True, True) #RA is in h.dd (hours.degrees)
     #moon_distance = KM_PER_AU * moon_equator.dist #topocentric
     #moon_distance2 = astronomy.Libration(best_time).dist_km #AU_IN_M * moon_equator.vec.Length()
@@ -47,12 +47,12 @@ def calculate(base_time, latitude, longitude):
     # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L54-L62
     #HP = lunar_parallax / math.cos(math.radians(moon_alt))
     SD = astronomy.Libration(best_time).diam_deg * 60 / 2 #in arcminutes, geocentric
-    lunar_parallax = (SD/60)/0.27245 #in degrees
+    lunar_parallax = SD/0.27245 #in arcminutes
     #SD = 0.27245 * HP * (180 * 60 / math.pi)        # semi-diameter of the Moon
-    SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax)))) #in arcminutes
+    SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax/60)))) #in arcminutes
 
     # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
-    ARCL = moon_elongation.elongation #in degrees
+    ARCL = moon_elongation_event.elongation #in degrees
     DAZ = sun_az - moon_az
     ARCV = math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))))
 
