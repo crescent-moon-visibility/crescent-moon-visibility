@@ -8,7 +8,7 @@ import astronomy # pip install astronomy-engine
 import pandas
 from tqdm import tqdm
 
-AU_IN_M = 149597871000
+#AU_IN_M = 149597871000 #this needs confirming, whether the output is in metres or km.
 
 def calculate(base_time, latitude, longitude):
     observer = astronomy.Observer(latitude, longitude)
