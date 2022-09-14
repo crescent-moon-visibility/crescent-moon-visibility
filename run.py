@@ -28,7 +28,7 @@ def calculate(base_time, latitude, longitude):
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
     #sun_distance = KM_PER_AU * sun_equator.dist #topocentric
-    sun_horizon = astronomy.Horizon(best_time, observer, sun_equator.ra, sun_equator.dec, astronomy.Refraction.JplHorizons)
+    sun_horizon = astronomy.Horizon(best_time, observer, sun_equator.ra, sun_equator.dec, astronomy.Refraction.Airless)
     sun_alt = sun_horizon.altitude
     sun_az = sun_horizon.azimuth
 
@@ -36,7 +36,7 @@ def calculate(base_time, latitude, longitude):
     moon_equator = astronomy.Equator(astronomy.Body.Moon, best_time, observer, True, True) #RA is in h.dd (hours.degrees)
     #moon_distance = KM_PER_AU * moon_equator.dist #topocentric
     #moon_distance2 = astronomy.Libration(best_time).dist_km #AU_IN_M * moon_equator.vec.Length()
-    moon_horizon = astronomy.Horizon(best_time, observer, moon_equator.ra, moon_equator.dec, astronomy.Refraction.JplHorizons)
+    moon_horizon = astronomy.Horizon(best_time, observer, moon_equator.ra, moon_equator.dec, astronomy.Refraction.Airless)
     moon_alt = moon_horizon.altitude
     moon_az = moon_horizon.azimuth
 
@@ -46,10 +46,10 @@ def calculate(base_time, latitude, longitude):
 
     # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L54-L62
     #HP = lunar_parallax / math.cos(math.radians(moon_alt))
-    SD = astronomy.Libration(best_time).diam_deg * 60 / 2 #in arcminutes, geocentric
+    SD = astronomy.Libration(best_time).diam_deg * 60 / 2 #semi-diameter of the Moon in arcminutes, geocentric
     lunar_parallax = SD/0.27245 #in arcminutes
     #SD = 0.27245 * HP * (180 * 60 / math.pi)        # semi-diameter of the Moon
-    SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax/60)))) #in arcminutes
+    SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax/60)))) #in arcminutes. Here SD is in arcminutes, moon_alt in degrees, lunar_parallax in degrees (that's why it has been divided by 60).
 
     # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
     ARCL = moon_elongation_event.elongation #in degrees
