@@ -14,7 +14,7 @@ def calculate(base_time, latitude, longitude):
     sunset   = astronomy.SearchRiseSet(astronomy.Body.Sun,  observer, astronomy.Direction.Set, time, 1)
     moonset  = astronomy.SearchRiseSet(astronomy.Body.Moon, observer, astronomy.Direction.Set, time, 1)
     if sunset is None or moonset is None: return {}
-    print(latitude, longitude)
+    #print(latitude, longitude)
 
     # https://astro.ukho.gov.uk/moonwatch/background.html
     # lag time: The time interval between sunset and moonset. The lag time is usually
@@ -56,17 +56,27 @@ def calculate(base_time, latitude, longitude):
     ARCL = moon_elongation_topo #in degrees
     DAZ = sun_az - moon_az
     DALT = moon_alt - sun_alt
-    ARCV = math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ)))) #moon_alt - sun_alt
+    COSARCV = math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))
+    if -1 <= COSARCV <= 1: ARCV = math.degrees(math.acos(COSARCV)) #math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ)))) #moon_alt - sun_alt
+    elif COSARCV < -1: ARCV = math.degrees(math.acos(-1))
+    elif COSARCV > 1: ARCV = math.degrees(math.acos(1)) 
     #print(ARCV)
 
     W_topo = SD_topo * (1 - (math.cos(math.radians(ARCL)))) #in arcminutes
-    q = (ARCV - (11.8371 - 6.3226*W_topo + 0.7319*W_topo**2 - 0.1018*W_topo**3)) / 10
+    #q = (ARCV - (11.8371 - 6.3226*W_topo + 0.7319*W_topo**2 - 0.1018*W_topo**3)) / 10
     V = ARCV - (7.1651 - 6.3226 * W_topo + 0.7319 * math.pow(W_topo, 2) - 0.1018 * math.pow(W_topo, 3))
 
     if V >= 5.65: q_code = 'A' # Crescent is visible by naked eye
     elif +5.65 > V >= 2: q_code = 'B' # Crescent is visible by optical aid
     elif +2 > V >= -0.96: q_code = 'C' # Crescent is visible only by optical aid
     elif -0.96 > V: q_code = 'D'
+
+    #if q > +0.216: q_code = 'A' # Crescent easily visible
+    #elif +0.216 >= q > -0.014: q_code = 'B' # Crescent visible under perfect conditions
+    #elif -0.014 >= q > -0.160: q_code = 'C' # May need optical aid to find crescent
+    #elif -0.160 >= q > -0.232: q_code = 'D' # Will need optical aid to find crescent
+    #elif -0.232 >= q > -0.293: q_code = 'E' # Crescent not visible with telescope
+    #elif -0.293 >= q: q_code = 'F'
 
     return {
         "lat": observer.latitude,
@@ -87,9 +97,10 @@ def calculate(base_time, latitude, longitude):
         #"HP": HP,
         "SD": SD,
         "SD_topo": SD_topo,
+        "COSARCV": COSARCV,
         "ARCV": ARCV,
-        "DAZ": DAZ,
         "DALT": DALT,
+        "DAZ": DAZ,
         "ARCL": ARCL,
         "W_topo": W_topo,
         "q_code": q_code,
@@ -98,7 +109,7 @@ def calculate(base_time, latitude, longitude):
 
 def run(base_time):
     result = []
-    STEPS = 10
+    STEPS = 3
     H = numpy.ndarray(shape=(180 // STEPS, 360 // STEPS))
     for lng in tqdm(range(0, 360, STEPS)):
         for lat in range(0, 180, STEPS):
