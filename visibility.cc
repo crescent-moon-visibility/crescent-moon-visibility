@@ -85,9 +85,9 @@ void render(uint32_t *image, astro_time_t base_time) {
 
             // https://github.com/rob-blackbourn/PyFinance/blob/2bbad39b/py_calendrical/location.py#L217
 
-            double SD = liberation.diam_deg * 60 / 2; // in arcminutes, geocentric
+            double SD = liberation.diam_deg * 60 / 2; // semi-diameter of the Moon in arcminutes, geocentric
             double lunar_parallax = SD/0.27245; // in arcminutes
-            double SD_topo = SD * (1 + (sin(moon_alt * DEG2RAD) * sin(lunar_parallax/60 * DEG2RAD))); // in arcminutes
+            double SD_topo = SD * (1 + (sin(moon_alt * DEG2RAD) * sin(lunar_parallax/60 * DEG2RAD))); // in arcminutes. Here SD is in arcminutes, moon_alt in degrees, lunar_parallax in degrees (that's why it has been divided by 60).
 
 #define YALLOP 0
 #if YALLOP
