@@ -89,14 +89,14 @@ void render(uint32_t *image, astro_time_t base_time) {
             double lunar_parallax = SD/0.27245; // in arcminutes
             double SD_topo = SD * (1 + (sin(moon_alt * DEG2RAD) * sin(lunar_parallax/60 * DEG2RAD))); // in arcminutes
 
-#define YALLOP 1 // Or Odeh?
-#ifdef YALLOP
+#define YALLOP 0
+#if YALLOP
+            astro_elongation_t moon_elongation = Astronomy_Elongation(BODY_MOON, best_time);
+            double ARCL = moon_elongation.elongation;
+#else // Odeh
             astro_angle_result_t moon_elongation_topo = Astronomy_AngleBetween(sun_equator.vec, moon_equator.vec); // topocentric elongation
             double ARCL = moon_elongation_topo.angle; // in degrees
             //assert(moon_elongation_topo.status == ASTRO_SUCCESS);
-#else
-            astro_elongation_t moon_elongation = Astronomy_Elongation(BODY_MOON, best_time);
-            double ARCL = moon_elongation.elongation
 #endif
             double DAZ = sun_az - moon_az;
             // double DALT = moon_alt - sun_alt;
@@ -115,7 +115,7 @@ void render(uint32_t *image, astro_time_t base_time) {
             else if (q > -.232) q_code = 'D'; // Will need optical aid to find crescent
             else if (q > -.293) q_code = 'E'; // Crescent not visible with telescope
             else q_code = 'F';
-#else
+#else // Odeh
             unsigned char q_code;
             double V = ARCV - (7.1651 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3));
             if (V >= 5.65) q_code = 'A'; // Crescent is visible by naked eye
