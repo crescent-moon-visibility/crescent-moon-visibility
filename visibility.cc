@@ -53,20 +53,27 @@ void render(uint32_t *image, astro_time_t base_time) {
             };
 
             astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360);
+#if 0
             astro_search_result_t sunset  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_SET, time, 1);
             astro_search_result_t moonset = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_SET, time, 1);
             if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) continue;
-            // https://astro.ukho.gov.uk/moonwatch/background.html
-            // lag time: The time interval between sunset and moonset. The lag time is usually
-            // given in minutes. It can be negative, indicating that the Moon sets before the Sun.
             double lag_time = moonset.time.ut - sunset.time.ut;
             if (lag_time < 0) {
                 image[i + j * width] = 0xFF0000FF;
                 continue;
             }
-            // best time: an empirical prediction of the time which gives the observer the best opportunity
-            // to see the new crescent Moon (Sunset time + (4/9)*Lag time).
-            astro_time_t best_time = Astronomy_TimeFromDays(sunset.time.ut + lag_time * 4.0/9);
+            astro_time_t best_time = Astronomy_AddDays(sunset.time, lag_time * 4.0/9);
+#else
+            astro_search_result_t sunrise  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_RISE, time, 1);
+            astro_search_result_t moonrise = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_RISE, time, 1);
+            if (sunrise.status != ASTRO_SUCCESS || moonrise.status != ASTRO_SUCCESS) continue;
+            double lag_time = sunrise.time.ut - moonrise.time.ut;
+            if (lag_time < 0) {
+                image[i + j * width] = 0xFF0000FF;
+                continue;
+            }
+            astro_time_t best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4.0/9);
+#endif
             //
             astro_equatorial_t sun_equator = Astronomy_Equator(BODY_SUN, &best_time, observer, EQUATOR_OF_DATE, ABERRATION);
             // double sun_distance = AU_IN_M * Astronomy_VectorLength(sun_equator.vec);
