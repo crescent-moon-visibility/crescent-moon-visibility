@@ -21,7 +21,7 @@ def calculate(base_time, latitude, longitude):
     # lag time: The time interval between sunset and moonset. The lag time is usually
     # given in minutes. It can be negative, indicating that the Moon sets before the Sun.
     lag_time = moonset.ut - sunset.ut
-    if lag_time < 0: return {"q_code": "G"}
+    if lag_time < 0: return {"q_code": "E"}
 
     # best time: an empirical prediction of the time which gives the observer the best opportunity
     # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
