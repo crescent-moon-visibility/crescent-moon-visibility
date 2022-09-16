@@ -16,5 +16,6 @@ $CC -fopenmp -Wall -Werror -o visibility.out -Ofastest -fno-exceptions -fno-rtti
 #time ./visibility.out 2022-08-28.png 2022-08-28T00:00:00Z
 #time ./visibility.out 2022-08-29.png 2022-08-29T00:00:00Z
 
-time ./visibility.out 2020-05-23.png 2020-05-23T00:00:00Z
-composite -blend 60 2020-05-23.png map.png 2020-05-23.png
+DATE=2022-06-29
+time ./visibility.out $DATE.png ${DATE}T00:00:00Z
+composite -blend 60 $DATE.png map.png $DATE.png

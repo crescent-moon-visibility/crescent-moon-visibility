@@ -60,6 +60,10 @@ void render(uint32_t *image, astro_time_t base_time) {
             // lag time: The time interval between sunset and moonset. The lag time is usually
             // given in minutes. It can be negative, indicating that the Moon sets before the Sun.
             double lag_time = moonset.time.ut - sunset.time.ut;
+            if (lag_time < 0) {
+                image[i + j * width] = 0xFF0000FF;
+                continue;
+            }
             // best time: an empirical prediction of the time which gives the observer the best opportunity
             // to see the new crescent Moon (Sunset time + (4/9)*Lag time).
             astro_time_t best_time = Astronomy_TimeFromDays(sunset.time.ut + lag_time * 4.0/9);
