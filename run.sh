@@ -1,12 +1,12 @@
 #!/bin/bash
 
-CC=gcc
+CC="gcc -Ofast"
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    CC="/usr/local/opt/llvm/bin/clang -L/usr/local/opt/llvm/lib" # -mllvm -polly
+    CC="/opt/homebrew/opt/llvm/bin/clang -Ofastest -L/opt/homebrew/opt/llvm/lib -fno-rtti" # -mllvm -polly
 fi
 
 rm -f visibility.out
-$CC -fopenmp -Wall -Werror -o visibility.out -Ofastest -fno-exceptions -fno-rtti \
+$CC -fopenmp -Wall -Werror -o visibility.out -fno-exceptions \
     visibility.cc thirdparty/astro_demo_common.c thirdparty/astronomy.c -lm \
     || exit $?
 
