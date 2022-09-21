@@ -14,3 +14,9 @@ The following features are currently available:
 - waxing (evening) crescent visibility bands.
 - waning (morning) crescent visibility bands.
 - moonset before sunset in red (similarly moonrise after sunrise).
+
+# Credits
+- [astronomy-engine](https://github.com/cosinekitty/astronomy/)
+
+# License
+MIT
