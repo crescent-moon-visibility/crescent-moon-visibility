@@ -23,8 +23,8 @@ def calculate(base_time, latitude, longitude):
     lag_time = moonset.ut - sunset.ut
     if lag_time < 0: return {"q_code": "G"}
 
-    # best time: an empirical prediction of the time which gives the observer the best opportunity
-    # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
+    # best time: a semi empirical prediction of the time which gives the observer the best opportunity
+    # to see the new crescent Moon according to Yallop (Sunset time + (4/9)*Lag time).
     best_time = astronomy.Time(sunset.ut + lag_time * 4/9)
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
@@ -45,14 +45,14 @@ def calculate(base_time, latitude, longitude):
     #lunar_parallax = 6378140 / moon_distance * math.cos(math.radians(moon_alt)) #lunar_parallax in radians.
     #lunar_parallax = math.degrees(lunar_parallax_RAD)
 
-    # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L54-L62
+
     #HP = lunar_parallax / math.cos(math.radians(moon_alt))
     SD = astronomy.Libration(best_time).diam_deg * 60 / 2 #semi-diameter of the Moon in arcminutes, geocentric
     lunar_parallax = SD/0.27245 #in arcminutes
     #SD = 0.27245 * HP * (180 * 60 / math.pi)        # semi-diameter of the Moon
     SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax/60)))) #in arcminutes. Here SD is in arcminutes, moon_alt in degrees, lunar_parallax in degrees (that's why it has been divided by 60).
 
-    # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
+
     ARCL = moon_elongation_event.elongation #in degrees
     DAZ = sun_az - moon_az
     ARCV = math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))))
