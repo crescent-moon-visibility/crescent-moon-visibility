@@ -1,8 +1,8 @@
 #!/bin/bash
 
-CC="gcc -Ofast"
+CC="gcc -O3"
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    CC="/opt/homebrew/opt/llvm/bin/clang -Ofastest -L/opt/homebrew/opt/llvm/lib -fno-rtti" # -mllvm -polly
+    CC="/opt/homebrew/opt/llvm/bin/clang -O3 -L/opt/homebrew/opt/llvm/lib -fno-rtti" # -mllvm -polly
 fi
 
 rm -f visibility.out
@@ -19,4 +19,4 @@ $CC -fopenmp -Wall -Werror -o visibility.out -fno-exceptions \
 DATE=2022-09-25
 time ./visibility.out ${DATE}T00:00:00Z evening yallop map $DATE.png || (echo Not successful && exit 1)
 composite -blend 60 $DATE.png map.png $DATE.png
-open $DATE.png
+#open $DATE.png
