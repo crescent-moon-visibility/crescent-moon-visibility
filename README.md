@@ -15,6 +15,10 @@ The following features are currently available:
 - waning (morning) crescent visibility bands.
 - moonset before sunset in red (similarly moonrise after sunrise).
 
+# Output Examples:
+Wed, 29 June 2022 evening crescent:
+
+
 # Credits
 - [astronomy-engine](https://github.com/cosinekitty/astronomy/)
 
