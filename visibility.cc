@@ -4,7 +4,8 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstdint>
-#include "thirdparty/astro_demo_common.h"
+
+#include "thirdparty/astronomy.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "thirdparty/stb_image_write.h"
 
@@ -24,13 +25,15 @@ static char calculate(double latitude, double longitude, astro_time_t base_time)
 int main(int argc, const char **argv) {
     if (argc == 1) {
         printf("Run this like,\n"
-               "./visibility.out 2022-08-27T00:00:00Z evening yallop map out.png\n"
-               "./visibility.out 2022-08-27T00:00:00Z morning odeh calculate 34.23 23.3");
+               "./visibility.out 2022-08-27 evening yallop map out.png\n"
+               "./visibility.out 2022-08-27 morning odeh calculate 34.23 23.3");
         return 1;
     }
 
-    astro_time_t time;
-    if (ParseTime(argv[1], &time)) return 1;
+    int year = atoi(strtok((char *) argv[1], "-"));
+    int month = atoi(strtok(nullptr, "-"));
+    int day = atoi(strtok(nullptr, "-"));
+    astro_time_t time = Astronomy_MakeTime(year, month, day, 0, 0, 0);
 
     bool evening;
     if      (strcmp(argv[2], "evening") == 0) evening = true;
