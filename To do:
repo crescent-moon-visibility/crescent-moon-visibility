@@ -1,0 +1,3 @@
+- cap latitude at -60 & +60.
+- moon age.
+- before conjunction colour.
