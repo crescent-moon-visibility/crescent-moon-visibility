@@ -16,8 +16,10 @@ const int maxLongitude = +180;
 const int width = (maxLongitude - minLongitude) * pixelsPerDegree;
 const int height = (maxLatitude - minLatitude) * pixelsPerDegree;
 
-void render(uint32_t *image, bool evening, bool yallop, astro_time_t base_time);
-char calculate(double latitude, double longitude, bool evening, bool yallop, astro_time_t base_time);
+template<bool evening, bool yallop>
+static void render(uint32_t *image, astro_time_t base_time);
+template<bool evening, bool yallop>
+static char calculate(double latitude, double longitude, astro_time_t base_time);
 
 int main(int argc, const char **argv) {
     if (argc == 1) {
@@ -42,15 +44,21 @@ int main(int argc, const char **argv) {
 
     if (strcmp(argv[4], "map") == 0) {
         uint32_t *image = (uint32_t *) calloc(width * height, 4);
-        render(image, evening, yallop, time);
+        evening
+            ? (yallop ? render<true,  true>(image, time) : render<true,  false>(image, time))
+            : (yallop ? render<false, true>(image, time) : render<false, false>(image, time));
         return !stbi_write_png(argv[5], width, height, 4, image, width * 4);
     } else if (strcmp(argv[4], "calculate") == 0) {
-        printf("%c", calculate(atof(argv[5]), atof(argv[6]), evening, yallop, time));
+        char c = evening
+            ? (yallop ? calculate<true,  true>(atof(argv[5]), atof(argv[6]), time) : calculate<true,  false>(atof(argv[5]), atof(argv[6]), time))
+            : (yallop ? calculate<false, true>(atof(argv[5]), atof(argv[6]), time) : calculate<false, false>(atof(argv[5]), atof(argv[6]), time));
+        printf("%c\n", c);
         return 0;
     } else return 1;
 }
 
-char calculate(double latitude, double longitude, bool evening, bool yallop, astro_time_t base_time) {
+template<bool evening, bool yallop>
+static char calculate(double latitude, double longitude, astro_time_t base_time) {
     astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360);
     astro_observer_t observer = { .latitude = latitude, .longitude = longitude, .height = .0 };
     astro_time_t best_time;
@@ -113,7 +121,8 @@ char calculate(double latitude, double longitude, bool evening, bool yallop, ast
     }
 }
 
-void render(uint32_t *image, bool evening, bool yallop, astro_time_t base_time) {
+template<bool evening, bool yallop>
+static void render(uint32_t *image, astro_time_t base_time) {
 #if defined(_OPENMP)
     #pragma omp parallel for
 #endif
@@ -121,7 +130,7 @@ void render(uint32_t *image, bool evening, bool yallop, astro_time_t base_time) 
         for (unsigned j = 0; j < height; ++j) {
             double latitude = ((height - (j + 1)) / (double) pixelsPerDegree) + minLatitude;
             double longitude = (i / (double) pixelsPerDegree) + minLongitude;
-            char q_code = calculate(latitude, longitude, evening, yallop, base_time);
+            char q_code = calculate<evening, yallop>(latitude, longitude, base_time);
             uint32_t color = 0x00000000;
             if      (q_code == 'A') color = 0xFF3EFF00;
             else if (q_code == 'B') color = 0xFF3EFF6D;
