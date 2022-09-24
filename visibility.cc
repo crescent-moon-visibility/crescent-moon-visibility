@@ -65,7 +65,7 @@ int main(int argc, const char **argv) {
         double latitude = atof(argv[3]);
         double longitude = atof(argv[4]);
         printf("%f\t%f\t", latitude, longitude);
-#define LOG(v) printf("%f\t", details.v)
+#define LOG(v) printf(#v": %f\t", details.v)
         memset(&details, 0, sizeof (details_t));
         calculate<true,  true >(latitude, longitude, time, &details);
         printf("Evening/Yallop: %c\t", details.result); LOG(value);
