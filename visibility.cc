@@ -19,14 +19,23 @@ const int height = (maxLatitude - minLatitude) * pixelsPerDegree;
 
 template<bool evening, bool yallop>
 static void render(uint32_t *image, astro_time_t base_time);
+
+struct details_t {
+    astro_time_t sun_rise, moon_rise;
+    double lag_time;
+    char result;
+    double sd, lunar_parallax, arcl, arcv, daz, w_topo, sd_topo, value, cosarcv;
+    double moon_horizon_azimuth, moon_horizon_altitude, moon_horizon_ra, moon_horizon_dec;
+    double sun_horizon_azimuth, sun_horizon_altitude, sun_horizon_ra, sun_horizon_dec;
+};
 template<bool evening, bool yallop>
-static char calculate(double latitude, double longitude, astro_time_t base_time);
+static char calculate(double latitude, double longitude, astro_time_t base_time, details_t *details);
 
 int main(int argc, const char **argv) {
     if (argc == 1) {
         printf("Run this like,\n"
-               "./visibility.out 2022-08-27 evening yallop map out.png\n"
-               "./visibility.out 2022-08-27 morning odeh calculate 34.23 23.3");
+               "./visibility 2022-08-27 map evening yallop out.png\n"
+               "./visibility 2022-08-27 calculate 34.23 23.3");
         return 1;
     }
 
@@ -35,49 +44,81 @@ int main(int argc, const char **argv) {
     int day = atoi(strtok(nullptr, "-"));
     astro_time_t time = Astronomy_MakeTime(year, month, day, 0, 0, 0);
 
-    bool evening;
-    if      (strcmp(argv[2], "evening") == 0) evening = true;
-    else if (strcmp(argv[2], "morning") == 0) evening = false;
-    else return 1;
+    if (strcmp(argv[2], "map") == 0) {
+        bool evening;
+        if      (strcmp(argv[3], "evening") == 0) evening = true;
+        else if (strcmp(argv[3], "morning") == 0) evening = false;
+        else return 1;
 
-    bool yallop;
-    if      (strcmp(argv[3], "yallop") == 0) yallop = true;
-    else if (strcmp(argv[3], "odeh")   == 0) yallop = false;
-    else return 1;
+        bool yallop;
+        if      (strcmp(argv[4], "yallop") == 0) yallop = true;
+        else if (strcmp(argv[4], "odeh")   == 0) yallop = false;
+        else return 1;
 
-    if (strcmp(argv[4], "map") == 0) {
         uint32_t *image = (uint32_t *) calloc(width * height, 4);
         evening
             ? (yallop ? render<true,  true>(image, time) : render<true,  false>(image, time))
             : (yallop ? render<false, true>(image, time) : render<false, false>(image, time));
         return !stbi_write_png(argv[5], width, height, 4, image, width * 4);
-    } else if (strcmp(argv[4], "calculate") == 0) {
-        char c = evening
-            ? (yallop ? calculate<true,  true>(atof(argv[5]), atof(argv[6]), time) : calculate<true,  false>(atof(argv[5]), atof(argv[6]), time))
-            : (yallop ? calculate<false, true>(atof(argv[5]), atof(argv[6]), time) : calculate<false, false>(atof(argv[5]), atof(argv[6]), time));
-        printf("%c\n", c);
+    } else if (strcmp(argv[2], "calculate") == 0) {
+        details_t details;
+        double latitude = atof(argv[3]);
+        double longitude = atof(argv[4]);
+        printf("%f\t%f\t", latitude, longitude);
+#define LOG(v) printf("%f\t", details.v)
+        memset(&details, 0, sizeof (details_t));
+        calculate<true,  true >(latitude, longitude, time, &details);
+        printf("Evening/Yallop: %c\t", details.result); LOG(value);
+        LOG(sun_rise.ut); LOG(moon_rise.ut); LOG(lag_time);
+        LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+        LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
+        LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
+
+        memset(&details, 0, sizeof (details_t));
+        calculate<true,  false>(latitude, longitude, time, &details);
+        printf("Evening/Odeh: %c\t", details.result); LOG(value);
+        LOG(sun_rise.ut); LOG(moon_rise.ut); LOG(lag_time);
+        LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+
+        memset(&details, 0, sizeof (details_t));
+        calculate<false, true >(latitude, longitude, time, &details);
+        printf("Morning/Yallop: %c\t", details.result); LOG(value);
+        LOG(sun_rise.ut); LOG(moon_rise.ut); LOG(lag_time);
+        LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+        LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
+        LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
+
+        memset(&details, 0, sizeof (details_t));
+        calculate<false, false>(latitude, longitude, time, &details);
+        printf("Evening/Odeh: %c\t", details.result); LOG(value);
+        LOG(sun_rise.ut); LOG(moon_rise.ut); LOG(lag_time);
+        LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+#undef LOG
+        printf("\n");
         return 0;
     } else return 1;
 }
 
 template<bool evening, bool yallop>
-static char calculate(double latitude, double longitude, astro_time_t base_time) {
+static char calculate(double latitude, double longitude, astro_time_t base_time, details_t *details) {
     astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360);
     astro_observer_t observer = { .latitude = latitude, .longitude = longitude, .height = .0 };
     astro_time_t best_time;
     if (evening) {
         astro_search_result_t sunset  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_SET, time, 1);
         astro_search_result_t moonset = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_SET, time, 1);
-        if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) return 'F';
+        if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) return 'G'; // "No sunset or moonset"
         double lag_time = moonset.time.ut - sunset.time.ut;
-        if (lag_time < 0) return 'G'; // Moonset before sunset
+        if (details) { details->lag_time = lag_time; details->moon_rise = time; details->sun_rise = time; }
+        if (lag_time < 0) return 'H'; // Moonset before sunset
         best_time = Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
     } else {
         astro_search_result_t sunrise  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_RISE, time, 1);
         astro_search_result_t moonrise = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_RISE, time, 1);
-        if (sunrise.status != ASTRO_SUCCESS || moonrise.status != ASTRO_SUCCESS) return 'F';
+        if (sunrise.status != ASTRO_SUCCESS || moonrise.status != ASTRO_SUCCESS) return 'G'; // No sunrise or moonrise
         double lag_time = sunrise.time.ut - moonrise.time.ut;
-        if (lag_time < 0) return 'G'; // Moonrise after sunrise
+        if (details) { details->lag_time = lag_time; details->moon_rise = time; details->sun_rise = time; }
+        if (lag_time < 0) return 'H'; // Moonrise after sunrise
         best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
     }
 
@@ -103,21 +144,35 @@ static char calculate(double latitude, double longitude, astro_time_t base_time)
     double ARCV = acos(COSARCV) * RAD2DEG;
     double W_topo = SD_topo * (1 - cos(ARCL * DEG2RAD)); // in arcminutes
 
+    char result = ' ';
+    double value;
     if (yallop) {
-        double q = (ARCV - (11.8371 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3))) / 10;
-        if      (q > +.216) return 'A'; // Crescent easily visible
-        else if (q > -.014) return 'B'; // Crescent visible under perfect conditions
-        else if (q > -.160) return 'C'; // May need optical aid to find crescent
-        else if (q > -.232) return 'D'; // Will need optical aid to find crescent
-        else if (q > -.293) return 'E'; // Crescent not visible with telescope
-        else return 'F';
+        value = (ARCV - (11.8371 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3))) / 10;
+        if      (value > +.216) result = 'A'; // Crescent easily visible
+        else if (value > -.014) result = 'B'; // Crescent visible under perfect conditions
+        else if (value > -.160) result = 'C'; // May need optical aid to find crescent
+        else if (value > -.232) result = 'D'; // Will need optical aid to find crescent
+        else if (value > -.293) result = 'E'; // Crescent not visible with telescope
+        else result = 'F';
     } else { // Odeh
-        double V = ARCV - (7.1651 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3));
-        if      (V >= 5.65) return 'A'; // Crescent is visible by naked eye
-        else if (V >= 2.00) return 'C'; // Crescent is visible by optical aid
-        else if (V >= -.96) return 'E'; // Crescent is visible only by optical aid
-        else return 'F';
+        value = ARCV - (7.1651 - 6.3226 * W_topo + .7319 * pow(W_topo, 2) - .1018 * pow(W_topo, 3));
+        if      (value >= 5.65) result = 'A'; // Crescent is visible by naked eye
+        else if (value >= 2.00) result = 'C'; // Crescent is visible by optical aid
+        else if (value >= -.96) result = 'E'; // Crescent is visible only by optical aid
+        else result = 'F';
     }
+
+    if (details) {
+        details->sd = SD; details->lunar_parallax = lunar_parallax; details->arcl = ARCL; details->arcv = ARCV; 
+        details->daz = DAZ; details->w_topo = W_topo; details->sd_topo = SD_topo; details->value = value;
+        details->result = result; details->cosarcv = COSARCV;
+        details->moon_horizon_azimuth = moon_horizon.azimuth, details->moon_horizon_altitude = moon_horizon.altitude;
+        details->moon_horizon_ra = moon_horizon.ra; details->moon_horizon_dec = moon_horizon.dec;
+        details->sun_horizon_azimuth = sun_horizon.azimuth; details->sun_horizon_altitude = sun_horizon.altitude;
+        details->sun_horizon_ra = sun_horizon.ra; details->sun_horizon_dec = sun_horizon.dec;
+    }
+
+    return result;
 }
 
 template<bool evening, bool yallop>
@@ -129,7 +184,7 @@ static void render(uint32_t *image, astro_time_t base_time) {
         for (unsigned j = 0; j < height; ++j) {
             double latitude = ((height - (j + 1)) / (double) pixelsPerDegree) + minLatitude;
             double longitude = (i / (double) pixelsPerDegree) + minLongitude;
-            char q_code = calculate<evening, yallop>(latitude, longitude, base_time);
+            char q_code = calculate<evening, yallop>(latitude, longitude, base_time, nullptr);
             uint32_t color = 0x00000000;
             if      (q_code == 'A') color = 0xFF3EFF00;
             else if (q_code == 'B') color = 0xFF3EFF6D;
@@ -137,7 +192,8 @@ static void render(uint32_t *image, astro_time_t base_time) {
             else if (q_code == 'D') color = 0xFF00FFFA;
             else if (q_code == 'E') color = 0xFF3C78FF;
             else if (q_code == 'F') color = 0x00000000;
-            else if (q_code == 'G') color = 0xFF0000FF;
+            else if (q_code == 'G') color = 0x00000000;
+            else if (q_code == 'H') color = 0xFF0000FF;
             image[i + j * width] = color;
         }
     }
