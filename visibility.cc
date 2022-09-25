@@ -23,7 +23,7 @@ static void render(uint32_t *image, astro_time_t base_time);
 struct details_t {
     astro_time_t sun_rise, moon_rise;
     double lag_time;
-    double sd, lunar_parallax, arcl, arcv, daz, w_topo, sd_topo, value, cosarcv;
+    double sd, lunar_parallax, arcl, arcv, daz, w_topo, sd_topo, value;
     double moon_horizon_azimuth, moon_horizon_altitude, moon_horizon_ra, moon_horizon_dec;
     double sun_horizon_azimuth, sun_horizon_altitude, sun_horizon_ra, sun_horizon_dec;
 };
@@ -34,7 +34,7 @@ int main(int argc, const char **argv) {
     if (argc == 1) {
         printf("Run this like,\n"
                "./visibility 2022-08-27 map evening yallop out.png\n"
-               "./visibility 2022-08-27 csv 34.23,23.3,0 100");
+               "./visibility 2022-08-27 table 34.23,23.3,0 100");
         return 1;
     }
 
@@ -59,57 +59,57 @@ int main(int argc, const char **argv) {
             ? (yallop ? render<true,  true>(image, time) : render<true,  false>(image, time))
             : (yallop ? render<false, true>(image, time) : render<false, false>(image, time));
         return !stbi_write_png(argv[5], width, height, 4, image, width * 4);
-    } else if (strcmp(argv[2], "csv") == 0) {
+    } else if (strcmp(argv[2], "table") == 0) {
         details_t details;
         double latitude = atof(strtok((char *) argv[3], ","));
         double longitude = atof(strtok(nullptr, ","));
         double altitude = atof(strtok(nullptr, ","));
         unsigned days = atoi(argv[4]);
-        printf("UTC Date,Latitude,Longitude,Altitude,");
-        printf("Evening/Yallop,q value,");
-        printf("Sunset,Moonset,lag time,");
-        printf("Moon sd,lunar parallax,arcl geo,arcv yallop,daz,w topo,sd topo,");
-        printf("Moon azimuth,Moon altitude,Moon ra,Moon dec,");
-        printf("Sun azimuth,Sun altitude,Sun ra,Sun dec,");
+        printf("UTC Date\tLatitude\tLongitude\tAltitude\t");
+        printf("Evening/Yallop\tq value\t");
+        printf("Sunset\tMoonset\tlag time\t");
+        printf("Moon sd\tlunar parallax\tarcl geo\tarcv yallop\tdaz\tw topo\tsd topo\t");
+        printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
+        printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
 
-        printf("Evening/Odeh,V value,");
-        printf("Moon sd,lunar parallax,arcl topo,arcv odeh,daz,w topo,sd topo,");
+        printf("Evening/Odeh\tV value\t");
+        printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
-        printf("Morning/Yallop,q value,");
-        printf("Sunrise,Moonrise,lag time,");
-        printf("Moon sd,lunar parallax,arcl geo,arcv yallop,daz,w topo,sd topo,");
-        printf("Moon azimuth,Moon altitude,Moon ra,Moon dec,");
-        printf("Sun azimuth,Sun altitude,Sun ra,Sun dec,");
+        printf("Morning/Yallop\tq value\t");
+        printf("Sunrise\tMoonrise\tlag time\t");
+        printf("Moon sd\tlunar parallax\tarcl geo\tarcv yallop\tdaz\tw topo\tsd topo\t");
+        printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
+        printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
 
-        printf("Morning/Odeh,V value,");
-        printf("Moon sd,lunar parallax,arcl topo,arcv odeh,daz,w topo,sd topo,");
+        printf("Morning/Odeh\tV value\t");
+        printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
         printf("\n");
         for (unsigned i = 0; i < days; ++i) {
             astro_utc_t utc = Astronomy_UtcFromTime(time);
-            printf("%d-%d-%d,%f,%f,%f,", utc.year, utc.month, utc.day, latitude, longitude, altitude);
-#define LOG(v) printf("%f,", details.v)
-#define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%4d-%2d-%2d %2d:%2d:%2.2f,", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
+            printf("%d-%d-%d\t%f\t%f\t%f\t", utc.year, utc.month, utc.day, latitude, longitude, altitude);
+#define LOG(v) printf("%f\t", details.v)
+#define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%02d-%02d %02d:%02d:%02.2f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
             memset(&details, 0, sizeof (details_t));
-            printf("%c,", calculate<true,  true >(latitude, longitude, altitude, time, &details)); LOG(value);
+            printf("%c\t", calculate<true,  true >(latitude, longitude, altitude, time, &details)); LOG(value);
             TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
             LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
             LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
 
             memset(&details, 0, sizeof (details_t));
-            printf("%c,", calculate<true,  false>(latitude, longitude, altitude, time, &details)); LOG(value);
+            printf("%c\t", calculate<true,  false>(latitude, longitude, altitude, time, &details)); LOG(value);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
-            printf("%c,", calculate<false, true >(latitude, longitude, altitude, time, &details)); LOG(value);
+            printf("%c\t", calculate<false, true >(latitude, longitude, altitude, time, &details)); LOG(value);
             TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
             LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
             LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
 
             memset(&details, 0, sizeof (details_t));
-            printf("%c,", calculate<false, false>(latitude, longitude, altitude, time, &details)); LOG(value);
+            printf("%c\t", calculate<false, false>(latitude, longitude, altitude, time, &details)); LOG(value);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 #undef TIME
 #undef LOG
@@ -186,7 +186,6 @@ static char calculate(double latitude, double longitude, double altitude, astro_
     if (details) {
         details->sd = SD; details->lunar_parallax = lunar_parallax; details->arcl = ARCL; details->arcv = ARCV;
         details->daz = DAZ; details->w_topo = W_topo; details->sd_topo = SD_topo; details->value = value;
-        details->cosarcv = COSARCV;
         details->moon_horizon_azimuth = moon_horizon.azimuth, details->moon_horizon_altitude = moon_horizon.altitude;
         details->moon_horizon_ra = moon_horizon.ra; details->moon_horizon_dec = moon_horizon.dec;
         details->sun_horizon_azimuth = sun_horizon.azimuth; details->sun_horizon_altitude = sun_horizon.altitude;
