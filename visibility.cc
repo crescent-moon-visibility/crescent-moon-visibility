@@ -35,7 +35,7 @@ int main(int argc, const char **argv) {
     if (argc == 1) {
         printf("Run this like,\n"
                "./visibility 2022-08-27 map evening yallop out.png\n"
-               "./visibility 2022-08-27 calculate 34.23 23.3");
+               "./visibility 2022-08-27 calculate 34.23 23.3 100");
         return 1;
     }
 
@@ -64,37 +64,42 @@ int main(int argc, const char **argv) {
         details_t details;
         double latitude = atof(argv[3]);
         double longitude = atof(argv[4]);
-        printf("%f\t%f\t", latitude, longitude);
+        unsigned days = atoi(argv[5]);
+        for (unsigned i = 0; i < days; ++i) {
+            astro_utc_t utc = Astronomy_UtcFromTime(time);
+            printf("%d-%d-%d\t%f\t%f\t", utc.year, utc.month, utc.day, latitude, longitude);
 #define LOG(v) printf(#v": %f\t", details.v)
-        memset(&details, 0, sizeof (details_t));
-        calculate<true,  true >(latitude, longitude, time, &details);
-        printf("Evening/Yallop: %c\t", details.result); LOG(value);
-        LOG(sun_rise.ut); LOG(moon_rise.ut); LOG(lag_time);
-        LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
-        LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
-        LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
+#define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf(#t ": %d-%d-%d-%d-%d-%f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
+            memset(&details, 0, sizeof (details_t));
+            calculate<true,  true >(latitude, longitude, time, &details);
+            TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
+            printf("Evening/Yallop: %c\t", details.result); LOG(value);
+            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+            LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
+            LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
 
-        memset(&details, 0, sizeof (details_t));
-        calculate<true,  false>(latitude, longitude, time, &details);
-        printf("Evening/Odeh: %c\t", details.result); LOG(value);
-        LOG(sun_rise.ut); LOG(moon_rise.ut); LOG(lag_time);
-        LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+            memset(&details, 0, sizeof (details_t));
+            calculate<true,  false>(latitude, longitude, time, &details);
+            printf("Evening/Odeh: %c\t", details.result); LOG(value);
+            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
 
-        memset(&details, 0, sizeof (details_t));
-        calculate<false, true >(latitude, longitude, time, &details);
-        printf("Morning/Yallop: %c\t", details.result); LOG(value);
-        LOG(sun_rise.ut); LOG(moon_rise.ut); LOG(lag_time);
-        LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
-        LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
-        LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
+            memset(&details, 0, sizeof (details_t));
+            calculate<false, true >(latitude, longitude, time, &details);
+            TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
+            printf("Morning/Yallop: %c\t", details.result); LOG(value);
+            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+            LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
+            LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
 
-        memset(&details, 0, sizeof (details_t));
-        calculate<false, false>(latitude, longitude, time, &details);
-        printf("Evening/Odeh: %c\t", details.result); LOG(value);
-        LOG(sun_rise.ut); LOG(moon_rise.ut); LOG(lag_time);
-        LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+            memset(&details, 0, sizeof (details_t));
+            calculate<false, false>(latitude, longitude, time, &details);
+            printf("Morning/Odeh: %c\t", details.result); LOG(value);
+            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+#undef TIME
 #undef LOG
-        printf("\n");
+            printf("\n");
+            time = Astronomy_AddDays(time, 1);
+        }
         return 0;
     } else return 1;
 }
@@ -107,18 +112,18 @@ static char calculate(double latitude, double longitude, astro_time_t base_time,
     if (evening) {
         astro_search_result_t sunset  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_SET, time, 1);
         astro_search_result_t moonset = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_SET, time, 1);
-        if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) return 'G'; // "No sunset or moonset"
+        if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) { details->result = 'G'; return 'G'; } // No sunset or moonset
         double lag_time = moonset.time.ut - sunset.time.ut;
         if (details) { details->lag_time = lag_time; details->moon_rise = time; details->sun_rise = time; }
-        if (lag_time < 0) return 'H'; // Moonset before sunset
+        if (lag_time < 0) { details->result = 'H'; return 'H'; } // Moonset before sunset
         best_time = Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
     } else {
         astro_search_result_t sunrise  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_RISE, time, 1);
         astro_search_result_t moonrise = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_RISE, time, 1);
-        if (sunrise.status != ASTRO_SUCCESS || moonrise.status != ASTRO_SUCCESS) return 'G'; // No sunrise or moonrise
+        if (sunrise.status != ASTRO_SUCCESS || moonrise.status != ASTRO_SUCCESS) { details->result = 'G'; return 'G'; } // No sunrise or moonrise
         double lag_time = sunrise.time.ut - moonrise.time.ut;
         if (details) { details->lag_time = lag_time; details->moon_rise = time; details->sun_rise = time; }
-        if (lag_time < 0) return 'H'; // Moonrise after sunrise
+        if (lag_time < 0) { details->result = 'H'; return 'H'; } // Moonrise after sunrise
         best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
     }
 
