@@ -89,7 +89,7 @@ int main(int argc, const char **argv) {
             astro_utc_t utc = Astronomy_UtcFromTime(time);
             printf("%d-%d-%d,%f,%f,%f,", utc.year, utc.month, utc.day, latitude, longitude, altitude);
 #define LOG(v) printf("%f,", details.v)
-#define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%d-%d-%d-%d-%f,", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
+#define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%4d-%2d-%2d %2d:%2d:%2.2f,", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
             memset(&details, 0, sizeof (details_t));
             printf("%c,", calculate<true,  true >(latitude, longitude, altitude, time, &details)); LOG(value);
             TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
