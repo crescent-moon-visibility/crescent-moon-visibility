@@ -21,7 +21,7 @@ template<bool evening, bool yallop>
 static void render(uint32_t *image, astro_time_t base_time);
 
 struct details_t {
-    astro_time_t sun_rise, moon_rise;
+    astro_time_t sun_rise, moon_rise, best_time;
     double lag_time;
     double sd, lunar_parallax, arcl, arcv, daz, w_topo, sd_topo, value;
     double moon_horizon_azimuth, moon_horizon_altitude, moon_horizon_ra, moon_horizon_dec;
@@ -34,7 +34,7 @@ int main(int argc, const char **argv) {
     if (argc == 1) {
         printf("Run this like,\n"
                "./visibility 2022-08-27 map evening yallop out.png\n"
-               "./visibility 2022-08-27 table 34.23,23.3,0 100");
+               "./visibility 2022-08-27 table 34.23,23.3,0 100 > results.tsv");
         return 1;
     }
 
@@ -67,7 +67,7 @@ int main(int argc, const char **argv) {
         unsigned days = atoi(argv[4]);
         printf("UTC Date\tLatitude\tLongitude\tAltitude\t");
         printf("Evening/Yallop\tq value\t");
-        printf("Sunset\tMoonset\tlag time\t");
+        printf("Sunset\tMoonset\tBest time\tlag time\t");
         printf("Moon sd\tlunar parallax\tarcl geo\tarcv yallop\tdaz\tw topo\tsd topo\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
@@ -76,7 +76,7 @@ int main(int argc, const char **argv) {
         printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
         printf("Morning/Yallop\tq value\t");
-        printf("Sunrise\tMoonrise\tlag time\t");
+        printf("Sunrise\tMoonrise\tBest time\tlag time\t");
         printf("Moon sd\tlunar parallax\tarcl geo\tarcv yallop\tdaz\tw topo\tsd topo\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
@@ -92,7 +92,7 @@ int main(int argc, const char **argv) {
 #define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%02d-%02d %02d:%02d:%02.2f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
             memset(&details, 0, sizeof (details_t));
             printf("%c\t", calculate<true,  true >(latitude, longitude, altitude, time, &details)); LOG(value);
-            TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
+            TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(lag_time);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
             LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
             LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
@@ -103,7 +103,7 @@ int main(int argc, const char **argv) {
 
             memset(&details, 0, sizeof (details_t));
             printf("%c\t", calculate<false, true >(latitude, longitude, altitude, time, &details)); LOG(value);
-            TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
+            TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(lag_time);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
             LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
             LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
@@ -184,6 +184,7 @@ static char calculate(double latitude, double longitude, double altitude, astro_
     }
 
     if (details) {
+        details->best_time = best_time;
         details->sd = SD; details->lunar_parallax = lunar_parallax; details->arcl = ARCL; details->arcv = ARCV;
         details->daz = DAZ; details->w_topo = W_topo; details->sd_topo = SD_topo; details->value = value;
         details->moon_horizon_azimuth = moon_horizon.azimuth, details->moon_horizon_altitude = moon_horizon.altitude;
