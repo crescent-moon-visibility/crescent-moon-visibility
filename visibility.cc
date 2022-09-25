@@ -66,23 +66,23 @@ int main(int argc, const char **argv) {
         double altitude = atof(strtok(nullptr, ","));
         unsigned days = atoi(argv[4]);
         printf("UTC Date,Latitude,Longitude,Altitude,");
-        printf("Evening/Yallop,q,");
+        printf("Evening/Yallop,q value,");
         printf("Sunset,Moonset,lag time,");
-        printf("sd,lunar parallax,arcl,arcv,daz,w topo,sd topo,cosarcv,");
-        printf("moon horizon azimuth,moon horizon altitude,moon horizon ra,moon horizon dec,");
-        printf("sun horizon azimuth,sun horizon altitude,sun horizon ra,sun horizon dec,");
+        printf("Moon sd,lunar parallax,arcl geo,arcv yallop,daz,w topo,sd topo,");
+        printf("Moon azimuth,Moon altitude,Moon ra,Moon dec,");
+        printf("Sun azimuth,Sun altitude,Sun ra,Sun dec,");
 
-        printf("Evening/Odeh,V,");
-        printf("sd,lunar parallax,arcl,arcv,daz,w topo,sd topo,cosarcv,");
+        printf("Evening/Odeh,V value,");
+        printf("Moon sd,lunar parallax,arcl topo,arcv odeh,daz,w topo,sd topo,");
 
-        printf("Morning/Yallop,q,");
+        printf("Morning/Yallop,q value,");
         printf("Sunrise,Moonrise,lag time,");
-        printf("sd,lunar parallax,arcl,arcv,daz,w topo,sd topo,cosarcv,");
-        printf("moon horizon azimuth,moon horizon altitude,moon horizon ra,moon horizon dec,");
-        printf("sun horizon azimuth,sun horizon altitude,sun horizon ra,sun horizon dec,");
+        printf("Moon sd,lunar parallax,arcl geo,arcv yallop,daz,w topo,sd topo,");
+        printf("Moon azimuth,Moon altitude,Moon ra,Moon dec,");
+        printf("Sun azimuth,Sun altitude,Sun ra,Sun dec,");
 
-        printf("Morning/Odeh,V,");
-        printf("sd,lunar parallax,arcl,arcv,daz,w topo,sd topo,cosarcv");
+        printf("Morning/Odeh,V value,");
+        printf("Moon sd,lunar parallax,arcl topo,arcv odeh,daz,w topo,sd topo,");
 
         printf("\n");
         for (unsigned i = 0; i < days; ++i) {
@@ -93,24 +93,24 @@ int main(int argc, const char **argv) {
             memset(&details, 0, sizeof (details_t));
             printf("%c,", calculate<true,  true >(latitude, longitude, altitude, time, &details)); LOG(value);
             TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
-            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
             LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
             LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
 
             memset(&details, 0, sizeof (details_t));
             printf("%c,", calculate<true,  false>(latitude, longitude, altitude, time, &details)); LOG(value);
-            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
             printf("%c,", calculate<false, true >(latitude, longitude, altitude, time, &details)); LOG(value);
             TIME(sun_rise); TIME(moon_rise); LOG(lag_time);
-            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
             LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
             LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
 
             memset(&details, 0, sizeof (details_t));
             printf("%c,", calculate<false, false>(latitude, longitude, altitude, time, &details)); LOG(value);
-            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo); LOG(cosarcv);
+            LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 #undef TIME
 #undef LOG
             printf("\n");
