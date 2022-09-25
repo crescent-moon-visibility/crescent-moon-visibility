@@ -32,7 +32,7 @@ static char calculate(double latitude, double longitude, double altitude, astro_
 
 int main(int argc, const char **argv) {
     if (argc == 1) {
-        printf("Run this like,\n"
+        printf("Run like this:\n"
                "./visibility 2022-08-27 map evening yallop out.png\n"
                "./visibility 2022-08-27 table 34.23,23.3,0 100 > results.tsv");
         return 1;
