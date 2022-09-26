@@ -130,7 +130,7 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         astro_search_result_t moonset = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_SET, time, 1);
         if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) return 'G'; // No sunset or moonset
         double lag_time = moonset.time.ut - sunset.time.ut;
-        if (details) { details->lag_time = lag_time; details->moon_rise = time; details->sun_rise = time; }
+        if (details) { details->lag_time = lag_time; details->moon_rise = moonset.time; details->sun_rise = sunset.time; }
         if (lag_time < 0) return 'H'; // Moonset before sunset
         best_time = Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
     } else {
@@ -138,7 +138,7 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         astro_search_result_t moonrise = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_RISE, time, 1);
         if (sunrise.status != ASTRO_SUCCESS || moonrise.status != ASTRO_SUCCESS) return 'G'; // No sunrise or moonrise
         double lag_time = sunrise.time.ut - moonrise.time.ut;
-        if (details) { details->lag_time = lag_time; details->moon_rise = time; details->sun_rise = time; }
+        if (details) { details->lag_time = lag_time; details->moon_rise = moonrise.time; details->sun_rise = sunrise.time; }
         if (lag_time < 0) return 'H'; // Moonrise after sunrise
         best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
     }
