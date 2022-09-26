@@ -75,8 +75,8 @@ int main(int argc, const char **argv) {
         printf("Evening/Odeh\tV value\t");
         printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
-        printf("Morning/Yallop\tq value\t");
         printf("Sunrise\tMoonrise\tBest time\tlag time\t");
+        printf("Morning/Yallop\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
         printf("Moon sd\tlunar parallax\tarcl geo\tarcv yallop\tdaz\tw topo\tsd topo\t");
@@ -86,13 +86,15 @@ int main(int argc, const char **argv) {
 
         printf("\n");
         for (unsigned i = 0; i < days; ++i) {
+            char result;
             astro_utc_t utc = Astronomy_UtcFromTime(time);
             printf("%d-%d-%d\t%f\t%f\t%f\t", utc.year, utc.month, utc.day, latitude, longitude, altitude);
 #define LOG(v) printf("%f\t", details.v)
 #define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%02d-%02d %02d:%02d:%02.2f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
             memset(&details, 0, sizeof (details_t));
-            printf("%c\t", calculate<true,  true >(latitude, longitude, altitude, time, &details)); LOG(value);
+            result = calculate<true,  true >(latitude, longitude, altitude, time, &details);
             TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(lag_time);
+            printf("%c\t", result); LOG(value);
             LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
             LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
@@ -102,8 +104,9 @@ int main(int argc, const char **argv) {
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
-            printf("%c\t", calculate<false, true >(latitude, longitude, altitude, time, &details)); LOG(value);
+            result = calculate<false,  true >(latitude, longitude, altitude, time, &details);
             TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(lag_time);
+            printf("%c\t", result); LOG(value);
             LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
             LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
