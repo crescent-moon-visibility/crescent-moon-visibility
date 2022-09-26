@@ -43,15 +43,15 @@ int main(int argc, const char **argv) {
     int day = atoi(strtok(nullptr, "-"));
     astro_time_t time = Astronomy_MakeTime(year, month, day, 0, 0, 0);
 
-    if (strcmp(argv[2], "map") == 0) {
+    if (!strcmp(argv[2], "map")) {
         bool evening;
-        if      (strcmp(argv[3], "evening") == 0) evening = true;
-        else if (strcmp(argv[3], "morning") == 0) evening = false;
+        if      (!strcmp(argv[3], "evening")) evening = true;
+        else if (!strcmp(argv[3], "morning")) evening = false;
         else return 1;
 
         bool yallop;
-        if      (strcmp(argv[4], "yallop") == 0) yallop = true;
-        else if (strcmp(argv[4], "odeh")   == 0) yallop = false;
+        if      (!strcmp(argv[4], "yallop")) yallop = true;
+        else if (!strcmp(argv[4], "odeh")  ) yallop = false;
         else return 1;
 
         uint32_t *image = (uint32_t *) calloc(width * height, 4);
@@ -59,7 +59,7 @@ int main(int argc, const char **argv) {
             ? (yallop ? render<true,  true>(image, time) : render<true,  false>(image, time))
             : (yallop ? render<false, true>(image, time) : render<false, false>(image, time));
         return !stbi_write_png(argv[5], width, height, 4, image, width * 4);
-    } else if (strcmp(argv[2], "table") == 0) {
+    } else if (!strcmp(argv[2], "table")) {
         details_t details;
         double latitude = atof(strtok((char *) argv[3], ","));
         double longitude = atof(strtok(nullptr, ","));
