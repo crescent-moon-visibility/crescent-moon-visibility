@@ -6,7 +6,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 rm -f visibility.out
-$CC -fopenmp -O3 -Wall -Werror -o visibility.out -fno-exceptions visibility.cc thirdparty/astronomy.c -lm || exit $?
+$CC -fopenmp -O3 -Wall -Werror -o visibility.out -fno-exceptions -DPIXEL_PER_DEGREE=4 visibility.cc thirdparty/astronomy.c -lm || exit $?
 
 #rm -f *.png
 # time ./visibility.out 2022-06-29.png 2022-06-29
