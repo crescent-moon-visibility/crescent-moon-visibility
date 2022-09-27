@@ -24,8 +24,8 @@ struct details_t {
     astro_time_t sun_rise, moon_rise, best_time;
     double lag_time;
     double sd, lunar_parallax, arcl, arcv, daz, w_topo, sd_topo, value;
-    double moon_horizon_azimuth, moon_horizon_altitude, moon_horizon_ra, moon_horizon_dec;
-    double sun_horizon_azimuth, sun_horizon_altitude, sun_horizon_ra, sun_horizon_dec;
+    double moon_azimuth, moon_altitude, moon_ra, moon_dec;
+    double sun_azimuth, sun_altitude, sun_ra, sun_dec;
 };
 template<bool evening, bool yallop>
 static char calculate(double latitude, double longitude, double altitude, astro_time_t base_time, details_t *details);
@@ -95,8 +95,8 @@ int main(int argc, const char **argv) {
             result = calculate<true,  true >(latitude, longitude, altitude, time, &details);
             TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(lag_time);
             printf("%c\t", result); LOG(value);
-            LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
-            LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
+            LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
+            LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
@@ -107,8 +107,8 @@ int main(int argc, const char **argv) {
             result = calculate<false,  true >(latitude, longitude, altitude, time, &details);
             TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(lag_time);
             printf("%c\t", result); LOG(value);
-            LOG(moon_horizon_azimuth); LOG(moon_horizon_altitude); LOG(moon_horizon_ra); LOG(moon_horizon_dec);
-            LOG(sun_horizon_azimuth); LOG(sun_horizon_altitude); LOG(sun_horizon_ra); LOG(sun_horizon_dec);
+            LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
+            LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
@@ -190,10 +190,10 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         details->best_time = best_time;
         details->sd = SD; details->lunar_parallax = lunar_parallax; details->arcl = ARCL; details->arcv = ARCV;
         details->daz = DAZ; details->w_topo = W_topo; details->sd_topo = SD_topo; details->value = value;
-        details->moon_horizon_azimuth = moon_horizon.azimuth, details->moon_horizon_altitude = moon_horizon.altitude;
-        details->moon_horizon_ra = moon_horizon.ra; details->moon_horizon_dec = moon_horizon.dec;
-        details->sun_horizon_azimuth = sun_horizon.azimuth; details->sun_horizon_altitude = sun_horizon.altitude;
-        details->sun_horizon_ra = sun_horizon.ra; details->sun_horizon_dec = sun_horizon.dec;
+        details->moon_azimuth = moon_horizon.azimuth, details->moon_altitude = moon_horizon.altitude;
+        details->moon_ra = moon_horizon.ra; details->moon_dec = moon_horizon.dec;
+        details->sun_azimuth = sun_horizon.azimuth; details->sun_altitude = sun_horizon.altitude;
+        details->sun_ra = sun_horizon.ra; details->sun_dec = sun_horizon.dec;
     }
 
     return result;
