@@ -1,8 +1,11 @@
 
+#!/usr/bin/env python3
+# MIT, @ebraminio and @hidp123
+
 import matplotlib.pyplot as plt
 import math
 import numpy
-import astronomy
+import astronomy # pip install astronomy-engine
 #import pandas
 from tqdm import tqdm
 
@@ -53,7 +56,7 @@ def calculate(base_time, latitude, longitude):
     #SD = 0.27245 * HP * (180 * 60 / math.pi)        # semi-diameter of the Moon
     SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax/60)))) #in arcminutes. Here SD is in arcminutes, moon_alt in degrees, lunar_parallax in degrees (that's why it has been divided by 60).
 
-    # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
+
     ARCL = moon_elongation_event.elongation #in degrees, geocentric
     DAZ = moon_az - sun_az
 
