@@ -53,9 +53,14 @@ def calculate(base_time, latitude, longitude):
     SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax/60)))) #in arcminutes. Here SD is in arcminutes, moon_alt in degrees, lunar_parallax in degrees (that's why it has been divided by 60).
 
 
-    ARCL = moon_elongation_event.elongation #in degrees
-    DAZ = sun_az - moon_az
-    ARCV = math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))))
+    ARCL = moon_elongation_event.elongation #in degrees, geocentric
+    DAZ = moon_az - sun_az
+
+    COSARCV = math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))
+
+    if -1 <= COSARCV <= 1: ARCV = math.degrees(math.acos(COSARCV)) #math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ)))) #moon_alt - sun_alt
+    elif COSARCV < -1: ARCV = math.degrees(math.acos(-1))
+    elif COSARCV > 1: ARCV = math.degrees(math.acos(1)) 
 
     W_topo = SD_topo * (1 - (math.cos(math.radians(ARCL)))) #in arcminutes
     q = (ARCV - (11.8371 - 6.3226*W_topo + 0.7319*W_topo**2 - 0.1018*W_topo**3)) / 10
