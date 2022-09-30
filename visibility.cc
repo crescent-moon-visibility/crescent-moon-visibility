@@ -44,8 +44,8 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         astro_time_t new_moon_nearest = (sunset.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset.time.ut)
             ? new_moon_prev : new_moon_next;
         if (details) {
-            details->moon_age_prev = best_time.ut - new_moon_prev.ut; // moon age at best time.
-            details->moon_age_next = best_time.ut - new_moon_next.ut; // moon age at best time.
+            details->moon_age_prev = best_time.ut - new_moon_prev.ut;
+            details->moon_age_next = best_time.ut - new_moon_next.ut;
         }
         if (sunset.time.ut < new_moon_nearest.ut) return 'G'; // sunset is before new moon
     } else {
@@ -62,8 +62,8 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         astro_time_t new_moon_nearest = (sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunrise.time.ut)
             ? new_moon_prev : new_moon_next;
         if (details) {
-            details->moon_age_prev = best_time.ut - new_moon_prev.ut; // moon age at best time.
-            details->moon_age_next = best_time.ut - new_moon_next.ut; // moon age at best time.
+            details->moon_age_prev = best_time.ut - new_moon_prev.ut;
+            details->moon_age_next = best_time.ut - new_moon_next.ut;
         }
         if (sunrise.time.ut > new_moon_nearest.ut) return 'G'; // sunrise is after new moon
     }
