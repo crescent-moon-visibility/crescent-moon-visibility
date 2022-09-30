@@ -14,7 +14,7 @@ $CC -fopenmp -O3 -Wall -Werror -o visibility.out -fno-exceptions -DPIXEL_PER_DEG
 #time ./visibility.out 2022-08-28.png 2022-08-28
 #time ./visibility.out 2022-08-29.png 2022-08-29
 
-DATE=2022-09-25
+DATE=2022-08-27
 time ./visibility.out $DATE map evening yallop $DATE.png || (echo Not successful && exit 1)
 composite -blend 60 $DATE.png map.png $DATE.png
 #open $DATE.png
