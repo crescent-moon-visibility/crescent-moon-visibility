@@ -57,8 +57,8 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         if (lag_time < 0) return 'I'; // Moonrise after sunrise
         best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
 
-        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, time, -35).time;
-        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, time, +35).time;
+        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunrise, -35).time;
+        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunrise, +35).time;
         astro_time_t new_moon_nearest = (sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunrise.time.ut)
             ? new_moon_prev : new_moon_next;
         if (details) {
