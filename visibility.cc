@@ -19,7 +19,7 @@ const unsigned height = (maxLatitude - minLatitude) * pixelsPerDegree;
 
 struct details_t {
     astro_time_t sun_rise, moon_rise, best_time;
-    double lag_time, moon_age;
+    double lag_time, moon_age_prev, moon_age_next;
     double sd, lunar_parallax, arcl, arcv, daz, w_topo, sd_topo, value;
     double moon_azimuth, moon_altitude, moon_ra, moon_dec;
     double sun_azimuth, sun_altitude, sun_ra, sun_dec;
@@ -39,9 +39,15 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         if (lag_time < 0) return 'I'; // Moonset before sunset
         best_time = Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
 
-        astro_search_result_t new_moon = Astronomy_SearchMoonPhase(0, time, -35);
-        if (details) details->moon_age = best_time.ut - new_moon.time.ut; // moon age at best time.
-        if (sunset.time.ut < new_moon.time.ut) return 'G'; // sunset is before new moon
+        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, time, -35).time;
+        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, time, +35).time;
+        astro_time_t new_moon_nearest = (sunset.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset.time.ut)
+            ? new_moon_prev : new_moon_next;
+        if (details) {
+            details->moon_age_prev = best_time.ut - new_moon_prev.ut; // moon age at best time.
+            details->moon_age_next = best_time.ut - new_moon_next.ut; // moon age at best time.
+        }
+        if (sunset.time.ut < new_moon_nearest.ut) return 'G'; // sunset is before new moon
     } else {
         astro_search_result_t sunrise  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_RISE, time, 1);
         astro_search_result_t moonrise = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_RISE, time, 1);
@@ -51,9 +57,15 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         if (lag_time < 0) return 'I'; // Moonrise after sunrise
         best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
 
-        astro_search_result_t new_moon = Astronomy_SearchMoonPhase(0, time, +35);
-        if (details) details->moon_age = new_moon.time.ut - best_time.ut; // moon age at best time.
-        if (sunrise.time.ut > new_moon.time.ut) return 'G'; // sunrise is after new moon
+        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, time, -35).time;
+        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, time, +35).time;
+        astro_time_t new_moon_nearest = (sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunrise.time.ut)
+            ? new_moon_prev : new_moon_next;
+        if (details) {
+            details->moon_age_prev = best_time.ut - new_moon_prev.ut; // moon age at best time.
+            details->moon_age_next = best_time.ut - new_moon_next.ut; // moon age at best time.
+        }
+        if (sunrise.time.ut > new_moon_nearest.ut) return 'G'; // sunrise is after new moon
     }
 
     astro_equatorial_t sun_equator = Astronomy_Equator(BODY_SUN, &best_time, observer, EQUATOR_OF_DATE, ABERRATION);
@@ -171,7 +183,7 @@ int main(int argc, const char **argv) {
         unsigned days = atoi(argv[4]);
         printf("UTC Date\tLatitude\tLongitude\tAltitude\t");
 
-        printf("Sunset\tMoonset\tBest time\tMoon age\tlag time\t");
+        printf("Sunset\tMoonset\tBest time\tMoon age prev\tMoon age next\tlag time\t");
         printf("Evening/Yallop\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
@@ -180,7 +192,7 @@ int main(int argc, const char **argv) {
         printf("Evening/Odeh\tV value\t");
         printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
-        printf("Sunrise\tMoonrise\tBest time\tMoon age\tlag time\t");
+        printf("Sunrise\tMoonrise\tBest time\tMoon age prev\tMoon age next\tlag time\t");
         printf("Morning/Yallop\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
@@ -198,7 +210,7 @@ int main(int argc, const char **argv) {
 #define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%02d-%02d %02d:%02d:%02.2f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
             memset(&details, 0, sizeof (details_t));
             result = calculate<true,  true >(latitude, longitude, altitude, time, &details);
-            TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(moon_age); LOG(lag_time);
+            TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
             LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
@@ -210,7 +222,7 @@ int main(int argc, const char **argv) {
 
             memset(&details, 0, sizeof (details_t));
             result = calculate<false,  true >(latitude, longitude, altitude, time, &details);
-            TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(moon_age); LOG(lag_time);
+            TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
             LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
