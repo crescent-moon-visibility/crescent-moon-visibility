@@ -10,10 +10,10 @@
 #include "thirdparty/stb_image_write.h"
 
 const unsigned pixelsPerDegree = PIXEL_PER_DEGREE;
-const unsigned minLatitude = -90;
-const unsigned maxLatitude = +90;
-const unsigned minLongitude = -180;
-const unsigned maxLongitude = +180;
+const int minLatitude = -90;
+const int maxLatitude = +90;
+const int minLongitude = -180;
+const int maxLongitude = +180;
 const unsigned width = (maxLongitude - minLongitude) * pixelsPerDegree;
 const unsigned height = (maxLatitude - minLatitude) * pixelsPerDegree;
 
