@@ -13,6 +13,9 @@ $CC -fopenmp -O3 -Wall -Werror -o visibility.out -fno-exceptions -DPIXEL_PER_DEG
 echo "Compiliation is completed, now let's run the code."
 
 DATE=2022-08-27
-time ./visibility.out $DATE map evening yallop $DATE.png || (echo Not successful && exit 1)
+TYPE=evening
+METHOD=yallop
+time ./visibility.out $DATE map $TYPE $METHOD $DATE.png || (echo Not successful && exit 1)
 composite -blend 60 $DATE.png map.png $DATE.png
+convert -pointsize 20 -fill yellow -draw "text 625,700 '$TYPE, $METHOD, $DATE'" $DATE.png $DATE.png
 $OPEN $DATE.png

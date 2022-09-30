@@ -39,8 +39,8 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         if (lag_time < 0) return 'I'; // Moonset before sunset
         best_time = Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
 
-        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunset, -35).time;
-        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset, +35).time;
+        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunset.time, -35).time;
+        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset.time, +35).time;
         astro_time_t new_moon_nearest = (sunset.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset.time.ut)
             ? new_moon_prev : new_moon_next;
         if (details) {
@@ -57,8 +57,8 @@ static char calculate(double latitude, double longitude, double altitude, astro_
         if (lag_time < 0) return 'I'; // Moonrise after sunrise
         best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
 
-        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunrise, -35).time;
-        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunrise, +35).time;
+        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunrise.time, -35).time;
+        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunrise.time, +35).time;
         astro_time_t new_moon_nearest = (sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunrise.time.ut)
             ? new_moon_prev : new_moon_next;
         if (details) {
@@ -138,7 +138,7 @@ static void render(uint32_t *image, astro_time_t base_time) {
             else if (q_code == 'D') color = 0xFF00FFFA;
             else if (q_code == 'E') color = 0xFF3C78FF;
             else if (q_code == 'F') color = 0x00000000;
-            else if (q_code == 'G') color = 0xFF9988CC;
+            else if (q_code == 'G') color = 0xFFAD0D6A;
             else if (q_code == 'H') color = 0x00000000;
             else if (q_code == 'I') color = 0xFF0000FF;
             image[i + j * width] = color;
