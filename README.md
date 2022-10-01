@@ -24,7 +24,7 @@ For comparison
 ![image](https://user-images.githubusercontent.com/84683703/191850739-bd009136-5e8d-4d0f-ba1d-aac2ace6a564.png)
 
 # Build Instructions
-On a Linux machine make sure a C++ compiler (gcc-c++ or g++ package is available), on macOS install llvm from brew then run `./run.sh`.
+On a Linux machine make sure a C++ compiler (gcc-c++ or g++ package is available), on macOS install llvm from brew. Make sure imagemagick is installed also, then run `./run.sh`.
 
 On a Windows machine, first install msys2 then run `./build-mingw.sh`
 
