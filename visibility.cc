@@ -145,7 +145,7 @@ static void render(uint32_t *image, astro_time_t base_time) {
     #pragma omp parallel for
 #endif
     for (unsigned i = 0; i < width; ++i) {
-        double max_q_value = -INFINITY; unsigned max_q_value_x = 0, max_q_value_y = 0;
+        // double max_q_value = -INFINITY; unsigned max_q_value_x = 0, max_q_value_y = 0;
         for (unsigned j = 0; j < height; ++j) {
             double latitude = ((height - (j + 1)) / (double) pixelsPerDegree) + minLatitude;
             double longitude = (i / (double) pixelsPerDegree) + minLongitude;
@@ -178,15 +178,15 @@ static void render(uint32_t *image, astro_time_t base_time) {
 #endif
             { min_telescope_x = i; min_telescope_y = j; min_telescope_time = result_time; }
 
-            if (q_value > max_q_value)
-#if defined(_OPENMP)
-                #pragma omp critical
-#endif
-            { max_q_value_x = i; max_q_value_y = j; max_q_value = q_value; }
+//             if (q_value > max_q_value)
+// #if defined(_OPENMP)
+//                 #pragma omp critical
+// #endif
+//             { max_q_value_x = i; max_q_value_y = j; max_q_value = q_value; }
         }
 
-        if (max_q_value_x != 0 && max_q_value_y != 0)
-            image[max_q_value_x + max_q_value_y * width] = 0xFF0000FF;
+        // if (max_q_value_x != 0 && max_q_value_y != 0)
+        //     image[max_q_value_x + max_q_value_y * width] = 0xFF0000FF;
     }
 
     #define DIAMOND_SIZE 7
