@@ -30,7 +30,8 @@ static char calculate(
     double latitude, double longitude, double altitude, astro_time_t base_time,
     /* optional, used for table extra results */ details_t *details = nullptr,
     /* optional, used for moon ages lines in map */ bool *draw_line = nullptr,
-    /* optional, used for first visibility points */ double *result_time = nullptr
+    /* optional, used for first visibility points in map */ double *result_time = nullptr,
+    /* optional, used for red line in map */ double *q_value = nullptr
 ) {
     astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360);
     astro_observer_t observer = { .latitude = latitude, .longitude = longitude, .height = altitude };
@@ -120,6 +121,7 @@ static char calculate(
         else if (value >= -.96) result = 'E'; // Crescent is visible only by optical aid
         else result = 'F';
     }
+    if (q_value) *q_value = value;
 
     if (details) {
         details->best_time = best_time;
@@ -143,12 +145,14 @@ static void render(uint32_t *image, astro_time_t base_time) {
     #pragma omp parallel for
 #endif
     for (unsigned i = 0; i < width; ++i) {
+        double max_q_value = -INFINITY; unsigned max_q_value_x = 0, max_q_value_y = 0;
         for (unsigned j = 0; j < height; ++j) {
             double latitude = ((height - (j + 1)) / (double) pixelsPerDegree) + minLatitude;
             double longitude = (i / (double) pixelsPerDegree) + minLongitude;
             bool draw_line = false;
             double result_time = 0;
-            char q_code = calculate<evening, yallop>(latitude, longitude, 0, base_time, nullptr, &draw_line, &result_time);
+            double q_value = -INFINITY;
+            char q_code = calculate<evening, yallop>(latitude, longitude, 0, base_time, nullptr, &draw_line, &result_time, &q_value);
             uint32_t color = 0x00000000;
             if      (q_code == 'A') color = 0xFF3EFF00; // These color codes are in 0xAAGGBBRR format
             else if (q_code == 'B') color = 0xFF3EFF6D;
@@ -161,6 +165,8 @@ static void render(uint32_t *image, astro_time_t base_time) {
             else if (q_code == 'I') color = 0xFF0000FF;
             else if (q_code == 'J') color = 0xFF5707B5;
             if (draw_line) color = 0xFFB0B0B0;
+            image[i + j * width] = color;
+
             if ((q_code == 'A' || q_code == 'B') && result_time < min_naked_eye_time)
 #if defined(_OPENMP)
                 #pragma omp critical
@@ -171,7 +177,16 @@ static void render(uint32_t *image, astro_time_t base_time) {
                 #pragma omp critical
 #endif
             { min_telescope_x = i; min_telescope_y = j; min_telescope_time = result_time; }
-            image[i + j * width] = color;
+
+            if (q_value > max_q_value)
+#if defined(_OPENMP)
+                #pragma omp critical
+#endif
+            { max_q_value_x = i; max_q_value_y = j; max_q_value = q_value; }
+        }
+
+        if (max_q_value_x != 0 && max_q_value_y != 0) {
+            image[max_q_value_x + max_q_value_y * width] = 0xFF0000FF;
         }
     }
 
