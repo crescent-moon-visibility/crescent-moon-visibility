@@ -54,9 +54,8 @@ static char calculate(
             details->moon_age_prev = best_time.ut - new_moon_prev.ut;
             details->moon_age_next = best_time.ut - new_moon_next.ut;
         }
-        if (sunset.time.ut < new_moon_nearest.ut) return 'G'; // sunset is before new moon
-
         if (lag_time < 0) return 'I'; // Moonset before sunset
+        if (sunset.time.ut < new_moon_nearest.ut) return 'G'; // sunset is before new moon
     } else {
         astro_search_result_t sunrise  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_RISE, time, 1);
         astro_search_result_t moonrise = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_RISE, time, 1);
@@ -76,9 +75,8 @@ static char calculate(
             details->moon_age_prev = best_time.ut - new_moon_prev.ut;
             details->moon_age_next = best_time.ut - new_moon_next.ut;
         }
-        if (sunrise.time.ut > new_moon_nearest.ut) return 'G'; // sunrise is after new moon
-
         if (lag_time < 0) return 'I'; // Moonrise after sunrise
+        if (sunrise.time.ut > new_moon_nearest.ut) return 'G'; // sunrise is after new moon
     }
 
     astro_equatorial_t sun_equator = Astronomy_Equator(BODY_SUN, &best_time, observer, EQUATOR_OF_DATE, ABERRATION);
