@@ -175,22 +175,26 @@ static void render(uint32_t *image, astro_time_t base_time) {
         }
     }
 
+    #define DIAMOND_SIZE 7
     if (min_naked_eye_x != 0 && min_naked_eye_y != 0) {
-        for (int i = -5; i <= 5; ++i) {
-            for (int j = -5; j <= 5; ++j) {
+        for (int i = -DIAMOND_SIZE; i <= DIAMOND_SIZE; ++i) {
+            for (int j = -DIAMOND_SIZE; j <= DIAMOND_SIZE; ++j) {
+                if (abs(i) + abs(j) > DIAMOND_SIZE) continue;
                 unsigned naked_eye = min_naked_eye_x + i + (min_naked_eye_y + j) * width;
-                if (naked_eye < width * height) image[naked_eye] = 0xFFFFFFFF;
+                if (naked_eye < width * height) image[naked_eye] = 0xFF0000FF;
             }
         }
     }
     if (min_telescope_x != 0 && min_telescope_y != 0) {
-        for (int i = -5; i <= 5; ++i) {
-            for (int j = -5; j <= 5; ++j) {
+        for (int i = -DIAMOND_SIZE; i <= DIAMOND_SIZE; ++i) {
+            for (int j = -DIAMOND_SIZE; j <= DIAMOND_SIZE; ++j) {
+                if (abs(i) + abs(j) > DIAMOND_SIZE) continue;
                 unsigned telescope = min_telescope_x + i + (min_telescope_y + j) * width;
-                if (telescope < width * height) image[telescope] = 0xFFFFFFFF;
+                if (telescope < width * height) image[telescope] = 0xFF0000FF;
             }
         }
     }
+    #undef DIAMOND_SIZE
 }
 
 int main(int argc, const char **argv) {
