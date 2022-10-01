@@ -42,7 +42,7 @@ static char calculate(
         double lag_time = moonset.time.ut - sunset.time.ut;
         if (details) { details->lag_time = lag_time; details->moon_rise = moonset.time; details->sun_rise = sunset.time; }
 
-        best_time = Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
+        best_time = lag_time < 0 ? sunset.time : Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
         if (result_time) *result_time = best_time.ut;
 
         astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunset.time, -35).time;
@@ -64,7 +64,7 @@ static char calculate(
         double lag_time = sunrise.time.ut - moonrise.time.ut;
         if (details) { details->lag_time = lag_time; details->moon_rise = moonrise.time; details->sun_rise = sunrise.time; }
 
-        best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
+        best_time = lag_time < 0 ? sunrise.time : Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
         if (result_time) *result_time = best_time.ut;
 
         astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunrise.time, -35).time;
