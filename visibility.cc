@@ -28,8 +28,9 @@ struct details_t {
 template<bool evening, bool yallop>
 static char calculate(
     double latitude, double longitude, double altitude, astro_time_t base_time,
-    /* optional, used for table extra results */ details_t *details,
-    /* optional, used for moon ages lines */ bool *draw_line
+    /* optional, used for table extra results */ details_t *details = nullptr,
+    /* optional, used for moon ages lines in map */ bool *draw_line = nullptr,
+    /* optional, used for first visibility points */ double *result_time = nullptr
 ) {
     astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360);
     astro_observer_t observer = { .latitude = latitude, .longitude = longitude, .height = altitude };
@@ -42,6 +43,8 @@ static char calculate(
         if (details) { details->lag_time = lag_time; details->moon_rise = moonset.time; details->sun_rise = sunset.time; }
 
         best_time = Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
+        if (result_time) *result_time = best_time.ut;
+
         astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunset.time, -35).time;
         astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset.time, +35).time;
         astro_time_t new_moon_nearest = (sunset.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset.time.ut)
@@ -62,6 +65,8 @@ static char calculate(
         if (details) { details->lag_time = lag_time; details->moon_rise = moonrise.time; details->sun_rise = sunrise.time; }
 
         best_time = Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
+        if (result_time) *result_time = best_time.ut;
+
         astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunrise.time, -35).time;
         astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunrise.time, +35).time;
         astro_time_t new_moon_nearest = (sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunrise.time.ut)
@@ -131,6 +136,9 @@ static char calculate(
 
 template<bool evening, bool yallop>
 static void render(uint32_t *image, astro_time_t base_time) {
+    double min_naked_eye_time = INFINITY; unsigned min_naked_eye_x = 0, min_naked_eye_y = 0;
+    double min_telescope_time = INFINITY; unsigned min_telescope_x = 0, min_telescope_y = 0;
+
 #if defined(_OPENMP)
     #pragma omp parallel for
 #endif
@@ -139,7 +147,8 @@ static void render(uint32_t *image, astro_time_t base_time) {
             double latitude = ((height - (j + 1)) / (double) pixelsPerDegree) + minLatitude;
             double longitude = (i / (double) pixelsPerDegree) + minLongitude;
             bool draw_line = false;
-            char q_code = calculate<evening, yallop>(latitude, longitude, 0, base_time, nullptr, &draw_line);
+            double result_time = 0;
+            char q_code = calculate<evening, yallop>(latitude, longitude, 0, base_time, nullptr, &draw_line, &result_time);
             uint32_t color = 0x00000000;
             if      (q_code == 'A') color = 0xFF3EFF00; // These color codes are in 0xAAGGBBRR format
             else if (q_code == 'B') color = 0xFF3EFF6D;
@@ -151,7 +160,34 @@ static void render(uint32_t *image, astro_time_t base_time) {
             else if (q_code == 'H') color = 0x00000000;
             else if (q_code == 'I') color = 0xFF0000FF;
             if (draw_line) color = 0xFFB0B0B0;
+            if ((q_code == 'A' || q_code == 'B') && result_time < min_naked_eye_time)
+#if defined(_OPENMP)
+                #pragma omp critical
+#endif
+            { min_naked_eye_x = i; min_naked_eye_y = j; min_naked_eye_time = result_time; }
+            if ((q_code == 'C' || q_code == 'D') && result_time < min_telescope_time)
+#if defined(_OPENMP)
+                #pragma omp critical
+#endif
+            { min_telescope_x = i; min_telescope_y = j; min_telescope_time = result_time; }
             image[i + j * width] = color;
+        }
+    }
+
+    if (min_naked_eye_x != 0 && min_naked_eye_y != 0) {
+        for (int i = -5; i <= 5; ++i) {
+            for (int j = -5; j <= 5; ++j) {
+                unsigned naked_eye = min_naked_eye_x + i + (min_naked_eye_y + j) * width;
+                if (naked_eye < width * height) image[naked_eye] = 0xFFFFFFFF;
+            }
+        }
+    }
+    if (min_telescope_x != 0 && min_telescope_y != 0) {
+        for (int i = -5; i <= 5; ++i) {
+            for (int j = -5; j <= 5; ++j) {
+                unsigned telescope = min_telescope_x + i + (min_telescope_y + j) * width;
+                if (telescope < width * height) image[telescope] = 0xFFFFFFFF;
+            }
         }
     }
 }
@@ -219,7 +255,7 @@ int main(int argc, const char **argv) {
 #define LOG(v) printf("%f\t", details.v)
 #define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%02d-%02d %02d:%02d:%02.2f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
             memset(&details, 0, sizeof (details_t));
-            result = calculate<true,  true >(latitude, longitude, altitude, time, &details, nullptr);
+            result = calculate<true,  true >(latitude, longitude, altitude, time, &details);
             TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
@@ -227,11 +263,11 @@ int main(int argc, const char **argv) {
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
-            printf("%c\t", calculate<true,  false>(latitude, longitude, altitude, time, &details, nullptr)); LOG(value);
+            printf("%c\t", calculate<true,  false>(latitude, longitude, altitude, time, &details)); LOG(value);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
-            result = calculate<false,  true >(latitude, longitude, altitude, time, &details, nullptr);
+            result = calculate<false,  true >(latitude, longitude, altitude, time, &details);
             TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
@@ -239,7 +275,7 @@ int main(int argc, const char **argv) {
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
-            printf("%c\t", calculate<false, false>(latitude, longitude, altitude, time, &details, nullptr)); LOG(value);
+            printf("%c\t", calculate<false, false>(latitude, longitude, altitude, time, &details)); LOG(value);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 #undef TIME
 #undef LOG
