@@ -54,6 +54,7 @@ static char calculate(
             details->moon_age_prev = best_time.ut - new_moon_prev.ut;
             details->moon_age_next = best_time.ut - new_moon_next.ut;
         }
+        if (lag_time < 0 && sunset.time.ut < new_moon_nearest.ut) return 'J'; // both below
         if (lag_time < 0) return 'I'; // Moonset before sunset
         if (sunset.time.ut < new_moon_nearest.ut) return 'G'; // sunset is before new moon
     } else {
@@ -75,6 +76,7 @@ static char calculate(
             details->moon_age_prev = best_time.ut - new_moon_prev.ut;
             details->moon_age_next = best_time.ut - new_moon_next.ut;
         }
+        if (lag_time < 0 && sunrise.time.ut > new_moon_nearest.ut) return 'J'; // both below
         if (lag_time < 0) return 'I'; // Moonrise after sunrise
         if (sunrise.time.ut > new_moon_nearest.ut) return 'G'; // sunrise is after new moon
     }
@@ -157,6 +159,7 @@ static void render(uint32_t *image, astro_time_t base_time) {
             else if (q_code == 'G') color = 0xFFAD0D6A;
             else if (q_code == 'H') color = 0x00000000;
             else if (q_code == 'I') color = 0xFF0000FF;
+            else if (q_code == 'J') color = 0xFF5707B5;
             if (draw_line) color = 0xFFB0B0B0;
             if ((q_code == 'A' || q_code == 'B') && result_time < min_naked_eye_time)
 #if defined(_OPENMP)
