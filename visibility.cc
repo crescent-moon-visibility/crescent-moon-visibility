@@ -185,9 +185,8 @@ static void render(uint32_t *image, astro_time_t base_time) {
             { max_q_value_x = i; max_q_value_y = j; max_q_value = q_value; }
         }
 
-        if (max_q_value_x != 0 && max_q_value_y != 0) {
+        if (max_q_value_x != 0 && max_q_value_y != 0)
             image[max_q_value_x + max_q_value_y * width] = 0xFF0000FF;
-        }
     }
 
     #define DIAMOND_SIZE 7

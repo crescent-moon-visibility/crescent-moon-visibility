@@ -17,5 +17,5 @@ TYPE=evening
 METHOD=yallop
 time ./visibility.out $DATE map $TYPE $METHOD $DATE.png || (echo Not successful && exit 1)
 composite -blend 60 $DATE.png map.png $DATE.png
-convert -pointsize 20 -fill yellow -draw "text 625,700 '$TYPE, $METHOD, $DATE'" $DATE.png $DATE.png
+convert -pointsize 20 -fill black -draw "gravity south text 0,0 '$TYPE, $METHOD, $DATE'" $DATE.png $DATE.png
 $OPEN $DATE.png
