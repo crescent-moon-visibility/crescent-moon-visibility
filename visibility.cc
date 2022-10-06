@@ -18,7 +18,7 @@ const unsigned width = (maxLongitude - minLongitude) * pixelsPerDegree;
 const unsigned height = (maxLatitude - minLatitude) * pixelsPerDegree;
 
 struct details_t {
-    astro_time_t sun_rise, moon_rise, best_time;
+    astro_time_t sunset_sunrise, moonset_moonrise, best_time;
     double lag_time, moon_age_prev, moon_age_next;
     double sd, lunar_parallax, arcl, arcv, daz, w_topo, sd_topo, value;
     double moon_azimuth, moon_altitude, moon_ra, moon_dec;
@@ -35,52 +35,28 @@ static char calculate(
 ) {
     astro_time_t time = Astronomy_AddDays(base_time, -longitude / 360);
     astro_observer_t observer = { .latitude = latitude, .longitude = longitude, .height = altitude };
-    astro_time_t best_time;
-    if (evening) {
-        astro_search_result_t sunset  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_SET, time, 1);
-        astro_search_result_t moonset = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_SET, time, 1);
-        if (sunset.status != ASTRO_SUCCESS || moonset.status != ASTRO_SUCCESS) return 'H'; // No sunset or moonset
-        double lag_time = moonset.time.ut - sunset.time.ut;
-        if (details) { details->lag_time = lag_time; details->moon_rise = moonset.time; details->sun_rise = sunset.time; }
 
-        best_time = lag_time < 0 ? sunset.time : Astronomy_AddDays(sunset.time, lag_time * 4 / 9);
-        if (result_time) *result_time = best_time.ut;
-
-        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunset.time, -35).time;
-        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset.time, +35).time;
-        astro_time_t new_moon_nearest = (sunset.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset.time.ut)
-            ? new_moon_prev : new_moon_next;
-        if (draw_moon_line) *draw_moon_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
-        if (details) {
-            details->moon_age_prev = best_time.ut - new_moon_prev.ut;
-            details->moon_age_next = best_time.ut - new_moon_next.ut;
-        }
-        if (lag_time < 0 && sunset.time.ut < new_moon_nearest.ut) return 'J'; // both below
-        if (lag_time < 0) return 'I'; // Moonset before sunset
-        if (sunset.time.ut < new_moon_nearest.ut) return 'G'; // sunset is before new moon
-    } else {
-        astro_search_result_t sunrise  = Astronomy_SearchRiseSet(BODY_SUN,  observer, DIRECTION_RISE, time, 1);
-        astro_search_result_t moonrise = Astronomy_SearchRiseSet(BODY_MOON, observer, DIRECTION_RISE, time, 1);
-        if (sunrise.status != ASTRO_SUCCESS || moonrise.status != ASTRO_SUCCESS) return 'H'; // No sunrise or moonrise
-        double lag_time = sunrise.time.ut - moonrise.time.ut;
-        if (details) { details->lag_time = lag_time; details->moon_rise = moonrise.time; details->sun_rise = sunrise.time; }
-
-        best_time = lag_time < 0 ? sunrise.time : Astronomy_AddDays(sunrise.time, -lag_time * 4 / 9);
-        if (result_time) *result_time = best_time.ut;
-
-        astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunrise.time, -35).time;
-        astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunrise.time, +35).time;
-        astro_time_t new_moon_nearest = (sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunrise.time.ut)
-            ? new_moon_prev : new_moon_next;
-        if (draw_moon_line) *draw_moon_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
-        if (details) {
-            details->moon_age_prev = best_time.ut - new_moon_prev.ut;
-            details->moon_age_next = best_time.ut - new_moon_next.ut;
-        }
-        if (lag_time < 0 && sunrise.time.ut > new_moon_nearest.ut) return 'J'; // both below
-        if (lag_time < 0) return 'I'; // Moonrise after sunrise
-        if (sunrise.time.ut > new_moon_nearest.ut) return 'G'; // sunrise is after new moon
+    astro_direction_t direction = evening ? DIRECTION_SET : DIRECTION_RISE;
+    astro_search_result_t sunset_sunrise   = Astronomy_SearchRiseSet(BODY_SUN,  observer, direction, time, 1);
+    astro_search_result_t moonset_moonrise = Astronomy_SearchRiseSet(BODY_MOON, observer, direction, time, 1);
+    if (sunset_sunrise.status != ASTRO_SUCCESS || moonset_moonrise.status != ASTRO_SUCCESS) return 'H'; // No sun{set,rise} or moon{set,rise}
+    double lag_time = (moonset_moonrise.time.ut - sunset_sunrise.time.ut) * (evening ? 1 : -1);
+    if (details) { details->lag_time = lag_time; details->moonset_moonrise = moonset_moonrise.time; details->sunset_sunrise = sunset_sunrise.time; }
+    astro_time_t best_time = lag_time < 0 ? sunset_sunrise.time : Astronomy_AddDays(sunset_sunrise.time, lag_time * 4 / 9 * (evening ? 1 : -1));
+    if (result_time) *result_time = best_time.ut;
+    astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunset_sunrise.time, -35).time;
+    astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset_sunrise.time, +35).time;
+    astro_time_t new_moon_nearest = (sunset_sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset_sunrise.time.ut)
+        ? new_moon_prev : new_moon_next;
+    if (draw_moon_line) *draw_moon_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
+    if (details) {
+        details->moon_age_prev = best_time.ut - new_moon_prev.ut;
+        details->moon_age_next = best_time.ut - new_moon_next.ut;
     }
+    bool before_new_moon = (sunset_sunrise.time.ut - new_moon_nearest.ut) * (evening ? 1 : -1) < 0;
+    if (lag_time < 0 && before_new_moon) return 'J'; // Checks both of the conditions on the two below lines, shows a mixed color
+    if (lag_time < 0) return 'I'; // Moonset before sunset / Moonrise after sunrise
+    if (before_new_moon) return 'G'; // Sunset is before new moon / Sunrise is after new moon
 
     astro_equatorial_t sun_equator = Astronomy_Equator(BODY_SUN, &best_time, observer, EQUATOR_OF_DATE, ABERRATION);
     astro_horizon_t sun_horizon = Astronomy_Horizon(&best_time, observer, sun_equator.ra, sun_equator.dec, REFRACTION_NONE);
@@ -102,7 +78,7 @@ static char calculate(
     if      (COSARCV < -1) COSARCV = -1;
     else if (COSARCV > +1) COSARCV = +1;
     double ARCV = acos(COSARCV) * RAD2DEG;
-    double W_topo = SD_topo * (1 - cos(ARCL * DEG2RAD)); // in arcminutes
+    double W_topo = SD_topo * (1 - cos(ARCL * DEG2RAD)); // In arcminutes
 
     char result = ' ';
     double value;
@@ -275,7 +251,7 @@ int main(int argc, const char **argv) {
 #define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%02d-%02d %02d:%02d:%02.2f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
             memset(&details, 0, sizeof (details_t));
             result = calculate<true,  true >(latitude, longitude, altitude, time, &details);
-            TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
+            TIME(sunset_sunrise); TIME(moonset_moonrise); TIME(best_time); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
             LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
@@ -287,7 +263,7 @@ int main(int argc, const char **argv) {
 
             memset(&details, 0, sizeof (details_t));
             result = calculate<false,  true >(latitude, longitude, altitude, time, &details);
-            TIME(sun_rise); TIME(moon_rise); TIME(best_time); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
+            TIME(sunset_sunrise); TIME(moonset_moonrise); TIME(best_time); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
             LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
