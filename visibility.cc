@@ -29,7 +29,7 @@ template<bool evening, bool yallop>
 static char calculate(
     double latitude, double longitude, double altitude, astro_time_t base_time,
     /* optional, used for table extra results */ details_t *details = nullptr,
-    /* optional, used for moon ages lines in map */ bool *draw_line = nullptr,
+    /* optional, used for moon ages lines in map */ bool *draw_moon_line = nullptr,
     /* optional, used for first visibility points in map */ double *result_time = nullptr,
     /* optional, used for red line in map */ double *q_value = nullptr
 ) {
@@ -50,7 +50,7 @@ static char calculate(
         astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset.time, +35).time;
         astro_time_t new_moon_nearest = (sunset.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset.time.ut)
             ? new_moon_prev : new_moon_next;
-        if (draw_line) *draw_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
+        if (draw_moon_line) *draw_moon_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
         if (details) {
             details->moon_age_prev = best_time.ut - new_moon_prev.ut;
             details->moon_age_next = best_time.ut - new_moon_next.ut;
@@ -72,7 +72,7 @@ static char calculate(
         astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunrise.time, +35).time;
         astro_time_t new_moon_nearest = (sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunrise.time.ut)
             ? new_moon_prev : new_moon_next;
-        if (draw_line) *draw_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
+        if (draw_moon_line) *draw_moon_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
         if (details) {
             details->moon_age_prev = best_time.ut - new_moon_prev.ut;
             details->moon_age_next = best_time.ut - new_moon_next.ut;
@@ -149,10 +149,10 @@ static void render(uint32_t *image, astro_time_t base_time) {
         for (unsigned j = 0; j < height; ++j) {
             double latitude = ((height - (j + 1)) / (double) pixelsPerDegree) + minLatitude;
             double longitude = (i / (double) pixelsPerDegree) + minLongitude;
-            bool draw_line = false;
+            bool draw_moon_line = false;
             double result_time = 0;
             double q_value = -INFINITY;
-            char q_code = calculate<evening, yallop>(latitude, longitude, 0, base_time, nullptr, &draw_line, &result_time, &q_value);
+            char q_code = calculate<evening, yallop>(latitude, longitude, 0, base_time, nullptr, &draw_moon_line, &result_time, &q_value);
             uint32_t color = 0x00000000;
             if      (q_code == 'A') color = 0xFF3EFF00; // These color codes are in 0xAAGGBBRR format
             else if (q_code == 'B') color = 0xFF3EFF6D;
@@ -164,7 +164,7 @@ static void render(uint32_t *image, astro_time_t base_time) {
             else if (q_code == 'H') color = 0x00000000;
             else if (q_code == 'I') color = 0xFF0000FF;
             else if (q_code == 'J') color = 0xFF5707B5;
-            if (draw_line) color = 0xFFB0B0B0;
+            if (draw_moon_line) color = 0xFFB0B0B0;
             image[i + j * width] = color;
 
             if ((q_code == 'A' || q_code == 'B') && result_time < min_naked_eye_time)
