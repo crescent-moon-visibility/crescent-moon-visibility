@@ -1,6 +1,6 @@
 # Crescent Moon Visibility Maps
 
-Code is provided to draw visibility maps according to the following criterias:
+Code is provided to draw crescent visibility maps according to the following criterias:
 - [Yallop criteria](https://astro.ukho.gov.uk/download/NAOTN69.pdf),
 - [Odeh criteria](https://www.astronomycenter.net/pdf/2006_cri.pdf).
 
