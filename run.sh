@@ -13,8 +13,8 @@ $CC -fopenmp -O3 -Wall -Werror -o visibility.out -fno-exceptions -DPIXEL_PER_DEG
 echo "Compiliation is completed, now let's run the code."
 
 DATE=2022-08-27
-TYPE=evening
-METHOD=yallop
+TYPE=Evening
+METHOD=Yallop
 time ./visibility.out $DATE map $TYPE $METHOD $DATE.png || (echo Not successful && exit 1)
 composite -blend 60 $DATE.png map.png $DATE.png
 convert -pointsize 20 -fill black -draw "gravity south text 0,0 '$TYPE, $METHOD, $DATE'" $DATE.png $DATE.png
