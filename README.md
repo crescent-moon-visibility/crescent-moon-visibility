@@ -1,4 +1,4 @@
-# Crescent Moon Visibility Maps
+# Crescent Moon Visibility Maps Generator
 
 Code is provided to draw crescent visibility maps according to the following criterias:
 - [Yallop criteria](https://astro.ukho.gov.uk/download/NAOTN69.pdf),
