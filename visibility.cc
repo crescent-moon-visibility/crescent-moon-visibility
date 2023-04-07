@@ -7,7 +7,16 @@
 
 #include "thirdparty/astronomy.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wno-deprecated-declarations"
 #include "thirdparty/stb_image_write.h"
+#pragma GCC diagnostic pop
+
+// To be passed compiled time
+#ifndef PIXEL_PER_DEGREE
+#define PIXEL_PER_DEGREE 4
+#endif
 
 const unsigned pixelsPerDegree = PIXEL_PER_DEGREE;
 const int minLatitude = -90;
@@ -224,7 +233,7 @@ int main(int argc, const char **argv) {
         unsigned days = atoi(argv[4]);
         printf("UTC Date\tLatitude\tLongitude\tAltitude\t");
 
-        printf("Sunset\tMoonset\tBest time\tMoon age prev\tMoon age next\tlag time\t");
+        printf("Sunset\tMoonset\tBest time\tMoon age from prev\tMoon age from next\tlag time\t");
         printf("Evening/Yallop\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
@@ -233,7 +242,7 @@ int main(int argc, const char **argv) {
         printf("Evening/Odeh\tV value\t");
         printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
-        printf("Sunrise\tMoonrise\tBest time\tMoon age prev\tMoon age next\tlag time\t");
+        printf("Sunrise\tMoonrise\tBest time\tMoon age from prev\tMoon age from next\tlag time\t");
         printf("Morning/Yallop\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
