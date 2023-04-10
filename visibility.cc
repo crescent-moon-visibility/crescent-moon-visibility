@@ -9,7 +9,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wno-deprecated-declarations"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include "thirdparty/stb_image_write.h"
 #pragma GCC diagnostic pop
 
@@ -27,7 +27,7 @@ const unsigned width = (maxLongitude - minLongitude) * pixelsPerDegree;
 const unsigned height = (maxLatitude - minLatitude) * pixelsPerDegree;
 
 struct details_t {
-    astro_time_t sunset_sunrise, moonset_moonrise, best_time;
+    astro_time_t sunset_sunrise, moonset_moonrise, best_time, new_moon_prev, new_moon_next;
     double lag_time, moon_age_prev, moon_age_next;
     double sd, lunar_parallax, arcl, arcv, daz, w_topo, sd_topo, value;
     double moon_azimuth, moon_altitude, moon_ra, moon_dec;
@@ -57,6 +57,7 @@ static char calculate(
     astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset_sunrise.time, +35).time;
     astro_time_t new_moon_nearest = (sunset_sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset_sunrise.time.ut)
         ? new_moon_prev : new_moon_next;
+    details->new_moon_prev = new_moon_prev; details->new_moon_next = new_moon_next;
     if (draw_moon_line) *draw_moon_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
     if (details) {
         details->moon_age_prev = best_time.ut - new_moon_prev.ut;
