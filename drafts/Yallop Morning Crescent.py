@@ -9,6 +9,7 @@ import astronomy # pip install astronomy-engine
 from tqdm import tqdm
 
 #morning crescent Yallop
+
 KM_PER_AU = 1.4959787069098932e+8   #<const> The number of kilometers per astronomical unit.
 
 def calculate(base_time, latitude, longitude):
@@ -23,12 +24,21 @@ def calculate(base_time, latitude, longitude):
     # lag time: The time interval between sunset and moonset. The lag time is usually
     # given in minutes. It can be negative, indicating that the Moon sets before the Sun.
     lag_time = sunrise.ut - moonrise.ut
-    if lag_time < 0: return {"q_code": 'G'}
-
+    if lag_time < 0: return {"q_code": 'H'}
 
     # best time: an empirical prediction of the time which gives the observer the best opportunity
     # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
     best_time = astronomy.Time(sunrise.ut - lag_time * 4/9)
+
+    new_moon_prev = astronomy.SearchMoonPhase(0, sunrise, -35)
+    new_moon_next = astronomy.SearchMoonPhase(0, sunrise, 35)
+    if (sunrise.ut - new_moon_prev.ut) < (new_moon_next.ut - sunrise.ut):
+       new_moon_nearest = new_moon_prev
+    else: new_moon_nearest = new_moon_next
+
+    moon_age_to_next_moon = best_time.ut - new_moon_next.ut # moon age at best time.
+    moon_age_to_prev_moon = best_time.ut - new_moon_prev.ut # moon age at best time.
+    if sunrise.ut > new_moon_nearest.ut: return {"q_code": 'G'}
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
     #sun_distance = KM_PER_AU * sun_equator.dist #topocentric
@@ -55,9 +65,9 @@ def calculate(base_time, latitude, longitude):
     #SD = 0.27245 * HP * (180 * 60 / math.pi)        # semi-diameter of the Moon
     SD_topo = SD * (1 + (math.sin(math.radians(moon_alt)) * math.sin(math.radians(lunar_parallax/60)))) #in arcminutes. Here SD is in arcminutes, moon_alt in degrees, lunar_parallax in degrees (that's why it has been divided by 60).
 
-
+    # https://github.com/abdullah-alhashim/prayer_calculator/blob/8abe558/moon_sighting.py#L71-L77
     ARCL = moon_elongation_event.elongation #in degrees, geocentric
-    DAZ = moon_az - sun_az
+    DAZ = sun_az - moon_az
 
     COSARCV = math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))
 
@@ -102,7 +112,7 @@ def calculate(base_time, latitude, longitude):
 
 def run(base_time):
     result = []
-    STEPS = 1
+    STEPS = 10
     H = numpy.ndarray(shape=(180 // STEPS, 360 // STEPS))
     for lng in tqdm(range(0, 360, STEPS)):
         for lat in range(0, 180, STEPS):
@@ -116,10 +126,10 @@ def run(base_time):
     #result = pandas.DataFrame.from_records(result)
     #result.to_excel("output_" + str(base_time.Utc()) + ".xlsx")
 
-    plt.imshow(H)
+    plt.imshow(H) #, interpolation='sinc', filterrad='15.0'
     plt.show()
 
-run(astronomy.Time.Make(2022, 9, 25, 0, 0, 0))
+run(astronomy.Time.Make(2022, 9, 28, 0, 0, 0))
 #run(astronomy.Time.Make(2022, 6, 30, 0, 0, 0))
 #run(astronomy.Time.Make(2022, 8, 29, 0, 0, 0))
 
