@@ -259,9 +259,10 @@ int main(int argc, const char **argv) {
             printf("%d-%d-%d\t%f\t%f\t%f\t", utc.year, utc.month, utc.day, latitude, longitude, altitude);
 #define LOG(v) printf("%f\t", details.v)
 #define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%02d-%02d %02d:%02d:%02.2f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
+#define TIME_DIFF(t) printf("%s%d:%02d:%02d\t", details.t < 0 ? "-" : "", (int) floor(abs(details.t) * 24), (int) floor(abs(details.t) * 24 * 60 - floor(abs(details.t) * 24) * 60), (int) floor(abs(details.t) * 24 * 60 * 60 - floor(abs(details.t) * 24 * 60) * 60))
             memset(&details, 0, sizeof (details_t));
             result = calculate<true,  true >(latitude, longitude, altitude, time, &details);
-            TIME(sunset_sunrise); TIME(moonset_moonrise); TIME(best_time); TIME(new_moon_prev); TIME(new_moon_next); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
+            TIME(sunset_sunrise); TIME(moonset_moonrise); TIME(best_time); TIME(new_moon_prev); TIME(new_moon_next); TIME_DIFF(moon_age_prev); TIME_DIFF(moon_age_next); TIME_DIFF(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
             LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
