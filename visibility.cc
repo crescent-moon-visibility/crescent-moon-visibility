@@ -57,7 +57,7 @@ static char calculate(
     astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset_sunrise.time, +35).time;
     astro_time_t new_moon_nearest = (sunset_sunrise.time.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset_sunrise.time.ut)
         ? new_moon_prev : new_moon_next;
-    details->new_moon_prev = new_moon_prev; details->new_moon_next = new_moon_next;
+    if (details) { details->new_moon_prev = new_moon_prev; details->new_moon_next = new_moon_next; }
     if (draw_moon_line) *draw_moon_line = ((int) round((best_time.ut - new_moon_nearest.ut) * 24 * 20) % 20) == 0;
     if (details) {
         details->moon_age_prev = best_time.ut - new_moon_prev.ut;
@@ -84,10 +84,24 @@ static char calculate(
         : Astronomy_AngleBetween(sun_equator.vec, moon_equator.vec).angle; // Topocentric elongation in Odeh
 
     double DAZ = sun_horizon.azimuth - moon_horizon.azimuth;
-    double COSARCV = cos(ARCL * DEG2RAD) / cos(DAZ * DEG2RAD);
-    if      (COSARCV < -1) COSARCV = -1;
-    else if (COSARCV > +1) COSARCV = +1;
-    double ARCV = acos(COSARCV) * RAD2DEG;
+    double ARCV;
+    if (yallop) {
+        astro_vector_t geomoon = Astronomy_GeoVector(BODY_MOON, best_time, ABERRATION);
+        astro_vector_t geosun = Astronomy_GeoVector(BODY_SUN, best_time, ABERRATION);
+        astro_rotation_t rot = Astronomy_Rotation_EQJ_EQD(&best_time);
+        astro_vector_t rotmoon = Astronomy_RotateVector(rot, geomoon);
+        astro_vector_t rotsun  = Astronomy_RotateVector(rot, geosun);
+        astro_equatorial_t meq = Astronomy_EquatorFromVector(rotmoon);
+        astro_equatorial_t seq = Astronomy_EquatorFromVector(rotsun);
+        astro_horizon_t mhor = Astronomy_Horizon(&best_time, observer, meq.ra, meq.dec, REFRACTION_NONE);
+        astro_horizon_t shor = Astronomy_Horizon(&best_time, observer, seq.ra, seq.dec, REFRACTION_NONE);
+        ARCV = mhor.altitude - shor.altitude;
+    } else { // Odeh
+        double COSARCV = cos(ARCL * DEG2RAD) / cos(DAZ * DEG2RAD);
+        if      (COSARCV < -1) COSARCV = -1;
+        else if (COSARCV > +1) COSARCV = +1;
+        ARCV = acos(COSARCV) * RAD2DEG;
+    }
     double W_topo = SD_topo * (1 - cos(ARCL * DEG2RAD)); // In arcminutes
 
     char result = ' ';
