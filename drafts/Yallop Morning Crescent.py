@@ -69,13 +69,26 @@ def calculate(base_time, latitude, longitude):
     ARCL = moon_elongation_event.elongation #in degrees, geocentric
     DAZ = sun_az - moon_az
 
-    COSARCV = math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))
+    #COSARCV = math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ))
 
-    if -1 <= COSARCV <= 1: ARCV = math.degrees(math.acos(COSARCV)) #math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ)))) #moon_alt - sun_alt
-    elif COSARCV < -1: ARCV = math.degrees(math.acos(-1))
-    elif COSARCV > 1: ARCV = math.degrees(math.acos(1)) 
+    #if -1 <= COSARCV <= 1: ARCV = math.degrees(math.acos(COSARCV)) #math.degrees(math.acos(math.cos(math.radians(ARCL))/math.cos(math.radians(DAZ)))) #moon_alt - sun_alt
+    #elif COSARCV < -1: ARCV = math.degrees(math.acos(-1))
+    #elif COSARCV > 1: ARCV = math.degrees(math.acos(1)) 
+
+    #ARCV
+    geomoon = astronomy.GeoVector(astronomy.Body.Moon, best_time, True)
+    geosun = astronomy.GeoVector(astronomy.Body.Sun, best_time, True)
+    rot = astronomy.Rotation_EQJ_EQD(best_time)
+    rotmoon = astronomy.RotateVector(rot, geomoon)
+    rotsun  = astronomy.RotateVector(rot, geosun)
+    meq = astronomy.EquatorFromVector(rotmoon)
+    seq = astronomy.EquatorFromVector(rotsun)
+    mhor = astronomy.Horizon(best_time, observer, meq.ra, meq.dec, astronomy.Refraction.Airless)
+    shor = astronomy.Horizon(best_time, observer, seq.ra, seq.dec, astronomy.Refraction.Airless)
+    ARCV = mhor.altitude - shor.altitude
 
     W_topo = SD_topo * (1 - (math.cos(math.radians(ARCL)))) #in arcminutes
+    
     q = (ARCV - (11.8371 - 6.3226*W_topo + 0.7319*W_topo**2 - 0.1018*W_topo**3)) / 10
 
     if q > +0.216: q_code = 'A' # Crescent easily visible
