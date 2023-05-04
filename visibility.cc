@@ -240,6 +240,7 @@ int main(int argc, const char **argv) {
             ? (yallop ? render<true,  true>(image, time) : render<true,  false>(image, time))
             : (yallop ? render<false, true>(image, time) : render<false, false>(image, time));
         return !stbi_write_png(argv[5], width, height, 4, image, width * 4);
+        
     } else if (!strcmp(argv[2], "table")) {
         details_t details;
         double latitude = atof(strtok((char *) argv[3], ","));
