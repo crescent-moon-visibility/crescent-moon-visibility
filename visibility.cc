@@ -249,21 +249,21 @@ int main(int argc, const char **argv) {
         printf("UTC Date\tLatitude\tLongitude\tAltitude\t");
 
         printf("Sunset\tMoonset\tBest time\tPrev New Moon\tNext New Moon\tMoon age from prev\tMoon age to next\tLag time\t");
-        printf("Evening/Yallop\tq value\t");
+        printf("Evening (Yallop)\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
         printf("Moon sd\tlunar parallax\tarcl geo\tarcv yallop\tdaz\tw topo\tsd topo\t");
 
-        printf("Evening/Odeh\tV value\t");
+        printf("Evening (Odeh)\tV value\t");
         printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
         printf("Sunrise\tMoonrise\tBest time\tPrev New Moon\tNext New Moon\tMoon age from prev\tMoon age to next\tlag time\t");
-        printf("Morning/Yallop\tq value\t");
+        printf("Morning (Yallop)\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
         printf("Moon sd\tlunar parallax\tarcl geo\tarcv yallop\tdaz\tw topo\tsd topo\t");
 
-        printf("Morning/Odeh\tV value\t");
+        printf("Morning (Odeh)\tV value\t");
         printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
         printf("\n");
@@ -288,7 +288,7 @@ int main(int argc, const char **argv) {
 
             memset(&details, 0, sizeof (details_t));
             result = calculate<false,  true >(latitude, longitude, altitude, time, &details);
-            TIME(sunset_sunrise); TIME(moonset_moonrise); TIME(best_time); TIME(new_moon_prev); TIME(new_moon_next); LOG(moon_age_prev); LOG(moon_age_next); LOG(lag_time);
+            TIME(sunset_sunrise); TIME(moonset_moonrise); TIME(best_time); TIME(new_moon_prev); TIME(new_moon_next); TIME_DIFF(moon_age_prev); TIME_DIFF(moon_age_next); TIME_DIFF(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
             LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
