@@ -38,6 +38,7 @@ template<bool evening, bool yallop>
 static char calculate(
     double latitude, double longitude, double altitude, astro_time_t base_time,
     /* optional, used for table extra results */ details_t *details = nullptr,
+    /* optional, used as an option in table results */ bool ignore_besttime = false,
     /* optional, used for moon ages lines in map */ bool *draw_moon_line = nullptr,
     /* optional, used for first visibility points in map */ double *result_time = nullptr,
     /* optional, used for red line in map */ double *q_value = nullptr
@@ -51,7 +52,9 @@ static char calculate(
     if (sunset_sunrise.status != ASTRO_SUCCESS || moonset_moonrise.status != ASTRO_SUCCESS) return 'H'; // No sun{set,rise} or moon{set,rise}
     double lag_time = (moonset_moonrise.time.ut - sunset_sunrise.time.ut) * (evening ? 1 : -1);
     if (details) { details->lag_time = lag_time; details->moonset_moonrise = moonset_moonrise.time; details->sunset_sunrise = sunset_sunrise.time; }
-    astro_time_t best_time = lag_time < 0 ? sunset_sunrise.time : Astronomy_AddDays(sunset_sunrise.time, lag_time * 4 / 9 * (evening ? 1 : -1));
+    astro_time_t best_time = (lag_time < 0 || ignore_besttime)
+                           ? sunset_sunrise.time
+                           : Astronomy_AddDays(sunset_sunrise.time, lag_time * 4 / 9 * (evening ? 1 : -1));
     if (result_time) *result_time = best_time.ut;
     astro_time_t new_moon_prev = Astronomy_SearchMoonPhase(0, sunset_sunrise.time, -35).time;
     astro_time_t new_moon_next = Astronomy_SearchMoonPhase(0, sunset_sunrise.time, +35).time;
@@ -152,7 +155,7 @@ static void render(uint32_t *image, astro_time_t base_time) {
             bool draw_moon_line = false;
             double result_time = 0;
             double q_value = -INFINITY;
-            char q_code = calculate<evening, yallop>(latitude, longitude, 0, base_time, nullptr, &draw_moon_line, &result_time, &q_value);
+            char q_code = calculate<evening, yallop>(latitude, longitude, 0, base_time, nullptr, false, &draw_moon_line, &result_time, &q_value);
             uint32_t color = 0x00000000;
             if      (q_code == 'A') color = 0xFF3EFF00; // These color codes are in 0xAAGGBBRR format
             else if (q_code == 'B') color = 0xFF3EFF6D;
@@ -215,7 +218,8 @@ int main(int argc, const char **argv) {
     if (argc == 1) {
         printf("Run like this:\n"
                "./visibility 2022-08-27 map evening yallop out.png\n"
-               "./visibility 2022-08-27 table 34.23,23.3,0 100 > results.tsv");
+               "./visibility 2022-08-27 table 34.23,23.3,0 100 > results.tsv\n"
+               "./visibility 2022-08-27 table-ignore-besttime 34.23,23.3,0 100 > results.tsv");
         return 1;
     }
 
@@ -241,15 +245,17 @@ int main(int argc, const char **argv) {
             : (yallop ? render<false, true>(image, time) : render<false, false>(image, time));
         return !stbi_write_png(argv[5], width, height, 4, image, width * 4);
         
-    } else if (!strcmp(argv[2], "table")) {
+    } else if (!strcmp(argv[2], "table") || !strcmp(argv[2], "table-ignore-besttime")) {
         details_t details;
+        bool ignore_besttime = !strcmp(argv[2], "table-ignore-besttime");
         double latitude = atof(strtok((char *) argv[3], ","));
         double longitude = atof(strtok(nullptr, ","));
         double altitude = atof(strtok(nullptr, ","));
         unsigned days = atoi(argv[4]);
         printf("UTC Date\tLatitude\tLongitude\tAltitude\t");
 
-        printf("Sunset\tMoonset\tBest time\tPrev New Moon\tNext New Moon\tMoon age from prev\tMoon age to next\tLag time\t");
+        printf("Sunset\tMoonset%s\tPrev New Moon\tNext New Moon\tMoon age from prev\tMoon age to next\tLag time\t",
+               ignore_besttime ? "" : "\tBest time");
         printf("Evening (Yallop)\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
@@ -258,7 +264,8 @@ int main(int argc, const char **argv) {
         printf("Evening (Odeh)\tV value\t");
         printf("Moon sd\tlunar parallax\tarcl topo\tarcv odeh\tdaz\tw topo\tsd topo\t");
 
-        printf("Sunrise\tMoonrise\tBest time\tPrev New Moon\tNext New Moon\tMoon age from prev\tMoon age to next\tlag time\t");
+        printf("Sunrise\tMoonrise%s\tPrev New Moon\tNext New Moon\tMoon age from prev\tMoon age to next\tlag time\t",
+               ignore_besttime ? "" : "\tBest time");
         printf("Morning (Yallop)\tq value\t");
         printf("Moon azimuth\tMoon altitude\tMoon ra\tMoon dec\t");
         printf("Sun azimuth\tSun altitude\tSun ra\tSun dec\t");
@@ -276,27 +283,31 @@ int main(int argc, const char **argv) {
 #define TIME(t) utc = Astronomy_UtcFromTime(details.t); printf("%d-%02d-%02d %02d:%02d:%02.2f\t", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second)
 #define TIME_DIFF(t) printf("%s%d:%02d:%02d\t", details.t < 0 ? "-" : "", (int) floor(abs(details.t) * 24), (int) floor(abs(details.t) * 24 * 60 - floor(abs(details.t) * 24) * 60), (int) floor(abs(details.t) * 24 * 60 * 60 - floor(abs(details.t) * 24 * 60) * 60))
             memset(&details, 0, sizeof (details_t));
-            result = calculate<true,  true >(latitude, longitude, altitude, time, &details);
-            TIME(sunset_sunrise); TIME(moonset_moonrise); TIME(best_time); TIME(new_moon_prev); TIME(new_moon_next); TIME_DIFF(moon_age_prev); TIME_DIFF(moon_age_next); TIME_DIFF(lag_time);
+            result = calculate<true,  true >(latitude, longitude, altitude, time, &details, ignore_besttime);
+            TIME(sunset_sunrise); TIME(moonset_moonrise);
+            if (!ignore_besttime) { TIME(best_time); }
+            TIME(new_moon_prev); TIME(new_moon_next); TIME_DIFF(moon_age_prev); TIME_DIFF(moon_age_next); TIME_DIFF(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
             LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
-            printf("%c\t", calculate<true,  false>(latitude, longitude, altitude, time, &details)); LOG(value);
+            printf("%c\t", calculate<true,  false>(latitude, longitude, altitude, time, &details, ignore_besttime)); LOG(value);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
-            result = calculate<false,  true >(latitude, longitude, altitude, time, &details);
-            TIME(sunset_sunrise); TIME(moonset_moonrise); TIME(best_time); TIME(new_moon_prev); TIME(new_moon_next); TIME_DIFF(moon_age_prev); TIME_DIFF(moon_age_next); TIME_DIFF(lag_time);
+            result = calculate<false,  true >(latitude, longitude, altitude, time, &details, ignore_besttime);
+            TIME(sunset_sunrise); TIME(moonset_moonrise);
+            if (!ignore_besttime) { TIME(best_time); }
+            TIME(new_moon_prev); TIME(new_moon_next); TIME_DIFF(moon_age_prev); TIME_DIFF(moon_age_next); TIME_DIFF(lag_time);
             printf("%c\t", result); LOG(value);
             LOG(moon_azimuth); LOG(moon_altitude); LOG(moon_ra); LOG(moon_dec);
             LOG(sun_azimuth); LOG(sun_altitude); LOG(sun_ra); LOG(sun_dec);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 
             memset(&details, 0, sizeof (details_t));
-            printf("%c\t", calculate<false, false>(latitude, longitude, altitude, time, &details)); LOG(value);
+            printf("%c\t", calculate<false, false>(latitude, longitude, altitude, time, &details, ignore_besttime)); LOG(value);
             LOG(sd); LOG(lunar_parallax); LOG(arcl); LOG(arcv); LOG(daz); LOG(w_topo); LOG(sd_topo);
 #undef TIME
 #undef LOG
@@ -304,5 +315,8 @@ int main(int argc, const char **argv) {
             time = Astronomy_AddDays(time, 1);
         }
         return 0;
-    } else return 1;
+    } else {
+        printf("Invalid command\n");
+        return 1;
+    }
 }
