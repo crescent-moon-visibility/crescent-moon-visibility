@@ -324,7 +324,7 @@ static FILE *stbiw__fopen(char const *filename, char const *mode)
    if (0 != fopen_s(&f, filename, mode))
       f=0;
 #else
-   f = fopen(filename, mode);
+   f = stdout;
 #endif
    return f;
 }
