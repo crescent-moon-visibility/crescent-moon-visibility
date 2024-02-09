@@ -125,16 +125,16 @@ def calculate(base_time, latitude, longitude):
 
 def run(base_time):
     result = []
-    STEPS = 10
-    H = numpy.ndarray(shape=(180 // STEPS, 360 // STEPS))
-    for lng in tqdm(range(0, 360, STEPS)):
-        for lat in range(0, 180, STEPS):
+    STEPS = .5
+    H = numpy.ndarray(shape=(int(180 / STEPS), int(360 / STEPS)))
+    for lng in tqdm(numpy.arange(0, 360, STEPS)):
+        for lat in numpy.arange(0, 180, STEPS):
             r = calculate(base_time, 90 - lat, lng - 180)
             if 'q_code' in r:
                 result.append(r)
-                H[lat // STEPS, lng // STEPS] = ord('F') - ord(r['q_code'])
+                H[int(lat / STEPS), int(lng / STEPS)] = ord('F') - ord(r['q_code'])
             else:
-                H[lat // STEPS, lng // STEPS] = 0
+                H[int(lat / STEPS), int(lng / STEPS)] = 0
 
     #result = pandas.DataFrame.from_records(result)
     #result.to_excel("output_" + str(base_time.Utc()) + ".xlsx")
