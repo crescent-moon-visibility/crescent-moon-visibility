@@ -125,7 +125,7 @@ def calculate(base_time, latitude, longitude):
 
 def run(base_time):
     result = []
-    STEPS = .5
+    STEPS = 10
     H = numpy.ndarray(shape=(int(180 / STEPS), int(360 / STEPS)))
     for lng in tqdm(numpy.arange(0, 360, STEPS)):
         for lat in numpy.arange(0, 180, STEPS):
