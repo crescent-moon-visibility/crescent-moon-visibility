@@ -131,7 +131,7 @@ def run(base_time):
     longitudes = np.arange(0, 360, STEPS)
     args_list = [(base_time, 90 - lat, lng - 180) for lat in latitudes for lng in longitudes]
 
-    with WorkerPool(n_jobs=2) as pool:
+    with WorkerPool(n_jobs=4) as pool:
         result = list(pool.map(calculate, args_list, progress_bar=True))
 
     H = np.zeros((len(latitudes), len(longitudes)))
