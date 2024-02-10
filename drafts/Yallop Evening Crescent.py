@@ -7,6 +7,7 @@ import numpy
 import astronomy # pip install astronomy-engine
 import pandas
 from tqdm import tqdm
+from mpire import WorkerPool
 
 
 
@@ -125,27 +126,48 @@ def calculate(base_time, latitude, longitude):
 
 def run(base_time):
     result = []
-    STEPS = 10
-    H = numpy.ndarray(shape=(int(180 / STEPS), int(360 / STEPS)))
-    for lng in tqdm(numpy.arange(0, 360, STEPS)):
-        for lat in numpy.arange(0, 180, STEPS):
-            r = calculate(base_time, 90 - lat, lng - 180)
-            if 'q_code' in r:
-                result.append(r)
-                H[int(lat / STEPS), int(lng / STEPS)] = ord('F') - ord(r['q_code'])
-            else:
-                H[int(lat / STEPS), int(lng / STEPS)] = 0
+    STEPS = 5
+    latitudes = np.arange(0, 180, STEPS)
+    longitudes = np.arange(0, 360, STEPS)
+    args_list = [(base_time, 90 - lat, lng - 180) for lat in latitudes for lng in longitudes]
 
-    #result = pandas.DataFrame.from_records(result)
-    #result.to_excel("output_" + str(base_time.Utc()) + ".xlsx")
+    with WorkerPool(n_jobs=2) as pool:
+        result = list(pool.map(calculate, args_list, progress_bar=True))
+
+    H = np.zeros((len(latitudes), len(longitudes)))
+    for i, r in enumerate(result):
+        if 'q_code' in r:
+            H[i // len(longitudes), i % len(longitudes)] = ord('F') - ord(r['q_code'])
+
     plt.imshow(H)
-    #plt.savefig(str(base_time.Utc()) + '.png')
-    plt.show() # uncomment this when running inside Jupyter Notebook / Google Colab
+    plt.show()
 
-run(astronomy.Time.Make(2022, 8, 27, 0, 0, 0))
-run(astronomy.Time.Make(2022, 8, 28, 0, 0, 0))
-run(astronomy.Time.Make(2022, 8, 29, 0, 0, 0))
+if __name__ == '__main__':
+    run(astronomy.Time.Make(2022, 8, 27, 0, 0, 0))
 
-run(astronomy.Time.Make(2022, 6, 29, 0, 0, 0))
+# def run(base_time):
+#     result = []
+#     STEPS = 10
+#     H = numpy.ndarray(shape=(int(180 / STEPS), int(360 / STEPS)))
+#     for lng in tqdm(numpy.arange(0, 360, STEPS)):
+#         for lat in numpy.arange(0, 180, STEPS):
+#             r = calculate(base_time, 90 - lat, lng - 180)
+#             if 'q_code' in r:
+#                 result.append(r)
+#                 H[int(lat / STEPS), int(lng / STEPS)] = ord('F') - ord(r['q_code'])
+#             else:
+#                 H[int(lat / STEPS), int(lng / STEPS)] = 0
+
+#     #result = pandas.DataFrame.from_records(result)
+#     #result.to_excel("output_" + str(base_time.Utc()) + ".xlsx")
+#     plt.imshow(H)
+#     #plt.savefig(str(base_time.Utc()) + '.png')
+#     plt.show() # uncomment this when running inside Jupyter Notebook / Google Colab
+
+# run(astronomy.Time.Make(2022, 8, 27, 0, 0, 0))
+# run(astronomy.Time.Make(2022, 8, 28, 0, 0, 0))
+# run(astronomy.Time.Make(2022, 8, 29, 0, 0, 0))
+
+# run(astronomy.Time.Make(2022, 6, 29, 0, 0, 0))
 #run(astronomy.Time.Make(2022, 6, 30, 0, 0, 0))
 #run(astronomy.Time.Make(2022, 8, 29, 0, 0, 0))
