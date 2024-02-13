@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # MIT, @ebraminio and @hidp123
 
+import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+import matplotlib.image as mpimg
 import math
 import numpy
 import astronomy # pip install astronomy-engine
-import pandas
-from tqdm import tqdm
-from mpire import WorkerPool
+#import pandas
+#from tqdm import tqdm
+from mpire import WorkerPool # pip install mpire
 
 
 
@@ -25,7 +28,6 @@ def calculate(base_time, latitude, longitude):
     # lag time: The time interval between sunset and moonset. The lag time is usually
     # given in minutes. It can be negative, indicating that the Moon sets before the Sun.
     lag_time = moonset.ut - sunset.ut
-    if lag_time < 0: return {"q_code": 'H'}
 
     # best time: an empirical prediction of the time which gives the observer the best opportunity
     # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
@@ -39,7 +41,9 @@ def calculate(base_time, latitude, longitude):
 
     moon_age_to_next_moon = best_time.ut - new_moon_next.ut # moon age at best time.
     moon_age_to_prev_moon = best_time.ut - new_moon_prev.ut # moon age at best time.
+
     if sunset.ut < new_moon_nearest.ut: return {"q_code": 'G'}
+    if lag_time < 0: return {"q_code": 'H'}
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
     #sun_distance = KM_PER_AU * sun_equator.dist #topocentric
@@ -134,12 +138,41 @@ def run(base_time):
     with WorkerPool(n_jobs=4) as pool:
         result = list(pool.map(calculate, args_list, progress_bar=True))
 
-    H = np.zeros((len(latitudes), len(longitudes)))
+    # Define the color mapping
+    color_mapping = {
+        'A': "#83c702",
+        'B': "#709a08",
+        'C': "#416100",
+        'D': "gold",
+        'E': "orange",
+        'F': (0, 0, 0, 0),
+        'G': "purple",
+        'H': "red"
+    }
+
+    # Create a colormap
+    cmap = ListedColormap(list(color_mapping.values()))
+
+    H = np.zeros((len(latitudes), len(longitudes), 4))  # Use 4 instead of 3
     for i, r in enumerate(result):
         if 'q_code' in r:
-            H[i // len(longitudes), i % len(longitudes)] = ord('F') - ord(r['q_code'])
+            color = matplotlib.colors.to_rgba(color_mapping[r['q_code']])  # Use to_rgba instead of to_rgb
+            H[i // len(longitudes), i % len(longitudes)] = color
 
-    plt.imshow(H)
+    plt.figure(figsize=(20, 10))  # Size is in inches
+
+    # Load the image
+    img = mpimg.imread('..map.png') # enter your file path for map image.
+
+    # Display the image
+    plt.imshow(img, extent=[-180, 180, -90, 90])
+
+    # Plot the data on the map with some transparency
+    plt.imshow(H, cmap=cmap, extent=[-180, 180, -90, 90], alpha=0.6)
+
+    plt.xticks([])  # Remove x-axis ticks
+    plt.yticks([])  # Remove y-axis ticks
+
     plt.show()
 
 if __name__ == '__main__':
