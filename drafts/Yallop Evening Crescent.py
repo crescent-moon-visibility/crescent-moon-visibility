@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import matplotlib.image as mpimg
 import math
-import numpy
+import numpy as np
 import astronomy # pip install astronomy-engine
 #import pandas
 #from tqdm import tqdm
