@@ -42,8 +42,8 @@ def calculate(base_time, latitude, longitude):
     moon_age_to_next_moon = best_time.ut - new_moon_next.ut # moon age at best time.
     moon_age_to_prev_moon = best_time.ut - new_moon_prev.ut # moon age at best time.
 
-    if sunset.ut < new_moon_nearest.ut: return {"q_code": 'G'}
-    if lag_time < 0: return {"q_code": 'H'}
+    if lag_time < 0: return {"q_code": 'G'}
+    if sunset.ut < new_moon_nearest.ut: return {"q_code": 'H'}
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
     #sun_distance = KM_PER_AU * sun_equator.dist #topocentric
@@ -146,8 +146,8 @@ def run(base_time):
         'D': "gold",
         'E': "orange",
         'F': (0, 0, 0, 0),
-        'G': "purple",
-        'H': "red"
+        'G': "red",
+        'H': "purple"
     }
 
     # Create a colormap
