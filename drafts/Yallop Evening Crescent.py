@@ -17,6 +17,7 @@ from mpire import WorkerPool # pip install mpire
 KM_PER_AU = 1.4959787069098932e+8   #<const> The number of kilometers per astronomical unit.
 
 def calculate(base_time, latitude, longitude):
+    if not -60 <= latitude <= 60: return {"q_code": 'I'}
     observer = astronomy.Observer(latitude, longitude)
     time = base_time.AddDays(-observer.longitude / 360) # this corrects the base time based on timezone
     sunset   = astronomy.SearchRiseSet(astronomy.Body.Sun,  observer, astronomy.Direction.Set, time, 1)
@@ -147,7 +148,8 @@ def run(base_time):
         'E': "orange",
         'F': (0, 0, 0, 0),
         'G': "red",
-        'H': "purple"
+        'H': "purple",
+        'I': (0, 0, 0, 0)
     }
 
     # Create a colormap
