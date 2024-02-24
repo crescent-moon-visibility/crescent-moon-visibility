@@ -30,6 +30,8 @@ def calculate(base_time, latitude, longitude):
     # given in minutes. It can be negative, indicating that the Moon sets before the Sun.
     lag_time = moonset.ut - sunset.ut
 
+    if lag_time < 0: return {"q_code": 'G'}
+
     # best time: an empirical prediction of the time which gives the observer the best opportunity
     # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
     best_time = astronomy.Time(sunset.ut + lag_time * 4/9)
@@ -43,7 +45,6 @@ def calculate(base_time, latitude, longitude):
     moon_age_to_next_moon = best_time.ut - new_moon_next.ut # moon age at best time.
     moon_age_to_prev_moon = best_time.ut - new_moon_prev.ut # moon age at best time.
 
-    if lag_time < 0: return {"q_code": 'G'}
     if sunset.ut < new_moon_nearest.ut: return {"q_code": 'H'}
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
