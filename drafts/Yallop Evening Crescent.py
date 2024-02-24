@@ -120,7 +120,7 @@ def calculate(base_time, latitude, longitude):
         "sun az": sun_az,
         #"moon dist": moon_distance,
         "moon alt": moon_alt,
-        "monn az": moon_az,
+        "moon az": moon_az,
         "lunar parllax": lunar_parallax,
         #"HP": HP,
         "SD": SD,
