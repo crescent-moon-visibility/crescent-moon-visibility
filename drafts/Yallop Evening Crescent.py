@@ -31,7 +31,9 @@ def calculate(base_time, latitude, longitude, STEPS):
     # https://astro.ukho.gov.uk/moonwatch/background.html
     # lag time: The time interval between sunset and moonset. The lag time is usually
     # given in minutes. It can be negative, indicating that the Moon sets before the Sun.
-    lag_time = moonset.ut - sunset.ut
+    if lag_time < 0:
+        best_time = sunset
+    else: best_time = astronomy.Time(sunset.ut + lag_time * 4/9)
 
     # best time: an empirical prediction of the time which gives the observer the best opportunity
     # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
