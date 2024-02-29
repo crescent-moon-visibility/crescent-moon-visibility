@@ -16,7 +16,7 @@ from mpire import WorkerPool # pip install mpire
 
 KM_PER_AU = 1.4959787069098932e+8   #<const> The number of kilometers per astronomical unit.
 
-def calculate(base_time, latitude, longitude):
+def calculate(base_time, latitude, longitude, STEPS):
     
     if not -60 <= latitude <= 60: return {}
     
@@ -33,21 +33,23 @@ def calculate(base_time, latitude, longitude):
     # given in minutes. It can be negative, indicating that the Moon sets before the Sun.
     lag_time = moonset.ut - sunset.ut
 
-    if lag_time < 0: return {"q_code": 'G'}
-
     # best time: an empirical prediction of the time which gives the observer the best opportunity
     # to see the new crescent Moon (Sunset time + (4/9)*Lag time).
     best_time = astronomy.Time(sunset.ut + lag_time * 4/9)
 
     new_moon_prev = astronomy.SearchMoonPhase(0, sunset, -35)
     new_moon_next = astronomy.SearchMoonPhase(0, sunset, 35)
+    
     if (sunset.ut - new_moon_prev.ut) <= (new_moon_next.ut - sunset.ut):
        new_moon_nearest = new_moon_prev
     else: new_moon_nearest = new_moon_next
 
     moon_age_to_next_moon = best_time.ut - new_moon_next.ut # moon age at best time.
     moon_age_to_prev_moon = best_time.ut - new_moon_prev.ut # moon age at best time.
+    moon_age_to_nearest_moon = best_time.ut - new_moon_nearest.ut
 
+    if (moon_age_to_nearest_moon * 24) % 1 < STEPS / 15: return {"q_code": 'I'}
+    if lag_time < 0: return {"q_code": 'G'}
     if sunset.ut < new_moon_nearest.ut: return {"q_code": 'H'}
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
@@ -136,9 +138,9 @@ def calculate(base_time, latitude, longitude):
 def run(base_time):
     result = []
     STEPS = 5
-    latitudes = np.arange(0, 180, STEPS)
-    longitudes = np.arange(0, 360, STEPS)
-    args_list = [(base_time, 90 - lat, lng - 180) for lat in latitudes for lng in longitudes]
+    latitudes = np.arange(-90, 90, STEPS)
+    longitudes = np.arange(-180, 180, STEPS)
+    args_list = [(base_time, - lat, lng, STEPS) for lat in latitudes for lng in longitudes]
 
     with WorkerPool(n_jobs=4) as pool:
         result = list(pool.map(calculate, args_list, progress_bar=True))
@@ -152,7 +154,8 @@ def run(base_time):
         'E': "orange",
         'F': (0, 0, 0, 0),
         'G': "red",
-        'H': "purple"
+        'H': "purple",
+        'I': "gray",
     }
 
     # Create a colormap
@@ -175,8 +178,15 @@ def run(base_time):
     # Plot the data on the map with some transparency
     plt.imshow(H, cmap=cmap, extent=[-180, 180, -90, 90], alpha=0.6)
 
-    plt.xticks([])  # Remove x-axis ticks
-    plt.yticks([])  # Remove y-axis ticks
+    # Add ticks and labels on both sides
+    plt.tick_params(axis='both', direction='inout', left=True, right=True, top=True, bottom=True, labelleft=True, labelright=True, labeltop=True, labelbottom=True)
+
+    # Add horizontal lines at y=60 and y=-60
+    plt.axhline(60, color='gray', linewidth=1.0)
+    plt.axhline(-60, color='gray', linewidth=1.0)
+    
+    # plt.xticks([])  # Remove x-axis ticks
+    # plt.yticks([])  # Remove y-axis ticks
 
     plt.show()
 
