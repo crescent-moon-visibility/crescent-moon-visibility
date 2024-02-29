@@ -48,7 +48,7 @@ def calculate(base_time, latitude, longitude, STEPS):
 
     moon_age_to_next_moon = best_time.ut - new_moon_next.ut # moon age at best time.
     moon_age_to_prev_moon = best_time.ut - new_moon_prev.ut # moon age at best time.
-    moon_age_to_nearest_moon = best_time.ut - new_moon_nearest.ut # moon age in days.
+    moon_age_to_nearest_new_moon = best_time.ut - new_moon_nearest.ut # moon age in days.
 
     if (moon_age_to_nearest_moon * 24) % 1 < STEPS / 15: return {"q_code": 'I'}
         
