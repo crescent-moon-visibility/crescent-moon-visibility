@@ -49,8 +49,10 @@ def calculate(base_time, latitude, longitude, STEPS):
     moon_age_to_nearest_moon = best_time.ut - new_moon_nearest.ut
 
     if (moon_age_to_nearest_moon * 24) % 1 < STEPS / 15: return {"q_code": 'I'}
-    if lag_time < 0: return {"q_code": 'G'}
-    if sunset.ut < new_moon_nearest.ut: return {"q_code": 'H'}
+        
+    if lag_time < 0 and sunset.ut < new_moon_nearest.ut: return {"q_code": 'J'}
+    if lag_time < 0: return {"q_code": 'G'} # i.e. moonset is before sunset
+    if sunset.ut < new_moon_nearest.ut: return {"q_code": 'H'} # i.e. conjunction after sunset
 
     sun_equator = astronomy.Equator(astronomy.Body.Sun, best_time, observer, True, True)
     #sun_distance = KM_PER_AU * sun_equator.dist #topocentric
@@ -156,6 +158,7 @@ def run(base_time):
         'G': "red",
         'H': "purple",
         'I': "gray",
+        'J': (1, 0, 0, 0.5),  # semi-transparent red        
     }
 
     # Create a colormap
