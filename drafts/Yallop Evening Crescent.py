@@ -50,8 +50,9 @@ def calculate(base_time, latitude, longitude, STEPS):
     moon_age_to_prev_moon = best_time.ut - new_moon_prev.ut # moon age at best time.
     moon_age_to_nearest_new_moon = best_time.ut - new_moon_nearest.ut # moon age in days.
 
-    if (moon_age_to_nearest_moon * 24) % 1 < STEPS / 15: return {"q_code": 'I'}
-        
+    # if (moon_age_to_nearest_moon * 24) % 1 < STEPS / 15: return {"q_code": 'I'} # to plot moon age lines at every hour.
+    if (moon_age_to_nearest_moon * 24) % 1 < STEPS / 30 or (moon_age_to_nearest_moon * 24) % 1 > (1 - STEPS / 30): return {"q_code": 'I'} # to plot moon age lines at every hour.
+
     if lag_time < 0 and sunset.ut < new_moon_nearest.ut: return {"q_code": 'J'}
     if lag_time < 0: return {"q_code": 'G'} # i.e. moonset is before sunset
     if sunset.ut < new_moon_nearest.ut: return {"q_code": 'H'} # i.e. conjunction after sunset
